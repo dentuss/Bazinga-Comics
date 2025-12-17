@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { apiFetch } from '@/lib/api';
+import { useAuth } from './AuthContext';
 
 interface WishlistItem {
   id: string;
@@ -27,17 +29,62 @@ export const useWishlist = () => {
 };
 
 export const WishlistProvider = ({ children }: { children: ReactNode }) => {
+  const { token } = useAuth();
   const [items, setItems] = useState<WishlistItem[]>([]);
 
+  useEffect(() => {
+    const loadWishlist = async () => {
+      if (!token) {
+        setItems([]);
+        return;
+      }
+      const response = await apiFetch<any[]>("/api/wishlist", { authToken: token });
+      setItems(
+        response.map((item) => ({
+          id: item.comic.id.toString(),
+          title: item.comic.title,
+          image: item.comic.image,
+          creators: item.comic.author || "",
+          price: Number(item.comic.price || 0),
+        }))
+      );
+    };
+
+    loadWishlist().catch(() => setItems([]));
+  }, [token]);
+
   const addToWishlist = (item: WishlistItem) => {
-    setItems((prev) => {
-      if (prev.find((i) => i.id === item.id)) return prev;
-      return [...prev, item];
+    if (!token) return;
+    apiFetch<any[]>("/api/wishlist", {
+      method: "POST",
+      authToken: token,
+      body: JSON.stringify({ comicId: item.id }),
+    }).then((res) => {
+      setItems(
+        res.map((wishlistItem) => ({
+          id: wishlistItem.comic.id.toString(),
+          title: wishlistItem.comic.title,
+          image: wishlistItem.comic.image,
+          creators: wishlistItem.comic.author || "",
+          price: Number(wishlistItem.comic.price || 0),
+        }))
+      );
     });
   };
 
   const removeFromWishlist = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    if (!token) return;
+    apiFetch<any[]>(`/api/wishlist/${id}`, { method: "DELETE", authToken: token }).then((res) => {
+      setItems(
+        res.map((wishlistItem) => ({
+          id: wishlistItem.comic.id.toString(),
+          title: wishlistItem.comic.title,
+          image: wishlistItem.comic.image,
+          creators: wishlistItem.comic.author || "",
+          price: Number(wishlistItem.comic.price || 0),
+        }))
+      );
+    });
   };
 
   const isInWishlist = (id: string) => {

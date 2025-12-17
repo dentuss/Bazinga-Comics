@@ -4,17 +4,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Mail, Lock, User } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [error, setError] = useState("");
+  const { login, register } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Placeholder for auth logic
-    console.log(isSignUp ? "Sign Up" : "Sign In", { email, password, name });
+    const action = isSignUp
+      ? register(name || email.split("@")[0], email, password)
+      : login(email, password);
+
+    action
+      .then(() => navigate("/"))
+      .catch(() => setError("Authentication failed. Please check your details."));
   };
 
   return (
@@ -100,6 +110,7 @@ const Auth = () => {
               <Button type="submit" className="w-full" size="lg">
                 {isSignUp ? "CREATE ACCOUNT" : "SIGN IN"}
               </Button>
+              {error && <p className="text-sm text-red-500 text-center">{error}</p>}
             </form>
 
             <div className="mt-6 text-center">
