@@ -28,6 +28,10 @@
 	</scm>
         <properties>
                 <java.version>21</java.version>
+                <flyway.version>11.14.1</flyway.version>
+                <db.url>jdbc:h2:mem:bazinga;MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE</db.url>
+                <db.user>sa</db.user>
+                <db.password></db.password>
         </properties>
         <dependencies>
                 <dependency>
@@ -109,13 +113,26 @@
 		</dependency>
 	</dependencies>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
-		</plugins>
-	</build>
+        <build>
+                <plugins>
+                        <plugin>
+                                <groupId>org.flywaydb</groupId>
+                                <artifactId>flyway-maven-plugin</artifactId>
+                                <version>${flyway.version}</version>
+                                <configuration>
+                                        <url>${db.url}</url>
+                                        <user>${db.user}</user>
+                                        <password>${db.password}</password>
+                                        <locations>
+                                                <location>filesystem:src/main/resources/db/migration</location>
+                                        </locations>
+                                </configuration>
+                        </plugin>
+                        <plugin>
+                                <groupId>org.springframework.boot</groupId>
+                                <artifactId>spring-boot-maven-plugin</artifactId>
+                        </plugin>
+                </plugins>
+        </build>
 
 </project>
