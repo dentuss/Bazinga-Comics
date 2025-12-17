@@ -118,6 +118,10 @@
                                         <url>${db.url}</url>
                                         <user>${db.user}</user>
                                         <password>${db.password}</password>
+                                        <defaultSchema>${db.user}</defaultSchema>
+                                        <schemas>
+                                            <schema>${db.user}</schema>
+                                        </schemas>
                                         <locations>
                                                 <location>filesystem:src/main/resources/db/migration</location>
                                         </locations>
