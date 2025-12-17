@@ -29,16 +29,11 @@
         <properties>
                 <java.version>21</java.version>
                 <flyway.version>11.14.1</flyway.version>
-                <db.url>jdbc:h2:mem:bazinga;MODE=Oracle;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE</db.url>
-                <db.user>sa</db.user>
-                <db.password></db.password>
+                <db.url>jdbc:oracle:thin:@//localhost:1521/FREEPDB1</db.url>
+                <db.user>bazinga_db</db.user>
+                <db.password>B312312312Ui</db.password>
         </properties>
         <dependencies>
-                <dependency>
-                        <groupId>com.h2database</groupId>
-                        <artifactId>h2</artifactId>
-                        <scope>runtime</scope>
-                </dependency>
                 <dependency>
                         <groupId>org.springframework.boot</groupId>
                         <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -123,10 +118,21 @@
                                         <url>${db.url}</url>
                                         <user>${db.user}</user>
                                         <password>${db.password}</password>
+                                        <defaultSchema>${db.user}</defaultSchema>
+                                        <schemas>
+                                                <schema>${db.user}</schema>
+                                        </schemas>
                                         <locations>
                                                 <location>filesystem:src/main/resources/db/migration</location>
                                         </locations>
                                 </configuration>
+                                <dependencies>
+                                        <dependency>
+                                                <groupId>com.oracle.database.jdbc</groupId>
+                                                <artifactId>ojdbc11</artifactId>
+                                                <version>23.9.0.25.07</version>
+                                        </dependency>
+                                </dependencies>
                         </plugin>
                         <plugin>
                                 <groupId>org.springframework.boot</groupId>
