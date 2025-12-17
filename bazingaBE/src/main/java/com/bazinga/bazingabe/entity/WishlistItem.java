@@ -1,5 +1,6 @@
 package com.bazinga.bazingabe.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "wishlist_items")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class WishlistItem {
 
     @Id
@@ -21,10 +23,12 @@ public class WishlistItem {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "wishlist_id", nullable = false)
+    @JsonIgnoreProperties({"user"})
     private Wishlist wishlist;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "comic_id", nullable = false)
+    @JsonIgnoreProperties({"condition", "category", "createdAt", "updatedAt"})
     private Comic comic;
 
     @Column(name = "added_at", nullable = false)

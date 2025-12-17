@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import HeroCarousel from "@/components/HeroCarousel";
 import ComicSection from "@/components/ComicSection";
@@ -9,21 +10,28 @@ import FilterBar from "@/components/FilterBar";
 import BrowseByFilter from "@/components/BrowseByFilter";
 import ComicModal from "@/components/ComicModal";
 import { Button } from "@/components/ui/button";
+import { apiFetch } from "@/lib/api";
 
-import comic1 from "@/assets/comic-1.jpg";
-import comic2 from "@/assets/comic-2.jpg";
-import comic3 from "@/assets/comic-3.jpg";
-import comic4 from "@/assets/comic-4.jpg";
-import comic5 from "@/assets/comic-5.jpg";
-import comic6 from "@/assets/comic-6.jpg";
-import comic7 from "@/assets/comic-7.jpg";
-import comic8 from "@/assets/comic-8.jpg";
+export interface ComicDto {
+  id: number;
+  title: string;
+  author?: string;
+  description?: string;
+  image: string;
+  price: number;
+  category?: { name: string };
+}
 
 const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedComic, setSelectedComic] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [browseFilter, setBrowseFilter] = useState<{ type: string; value: string }>({ type: "", value: "" });
+
+  const { data: comics = [] } = useQuery<ComicDto[]>({
+    queryKey: ["comics"],
+    queryFn: () => apiFetch<ComicDto[]>("/api/comics"),
+  });
 
   const searchQuery = searchParams.get("search") || "";
   const viewAll = searchParams.get("view") === "all";
@@ -42,32 +50,13 @@ const Index = () => {
     setBrowseFilter({ type: "", value: "" });
   };
 
-  const allComics = [
-    { image: comic1, title: "X-MEN: AGE OF MYTH ACTION FIGURE (2025) #1", creators: "Kindt, Unzueta", rating: 4.5, series: "X-Men", character: "Wolverine" },
-    { image: comic2, title: "EMPIRES OF VIOLENCE (2025) #1", creators: "Remender, Kim", rating: 4.8, series: "Avengers", character: "Iron Man" },
-    { image: comic3, title: "SPIDER-MAN NOIR (2025) #1", creators: "Grayson, Mandrake", rating: 4.7, series: "Spider-Man", character: "Spider-Man" },
-    { image: comic4, title: "X-MEN: THE UNBROKEN (2025) #1", creators: "MacKay, Noto", rating: 4.6, series: "X-Men", character: "Scarlet Witch" },
-    { image: comic5, title: "WHAT'S THOSE SHADOW (2025) #1", creators: "Hickman, Garbett", rating: 4.4, series: "Avengers", character: "Doctor Strange" },
-    { image: comic6, title: "BAZINGA-BOT: SPIDER WATCHBEARABLE EDITION (2025) #1", creators: "Slott, Harries", rating: 4.5, series: "Spider-Man", character: "Spider-Man" },
-    { image: comic7, title: "NEW AVENGERS (2025) #1", creators: "Ahmed, Mora", rating: 4.9, series: "Avengers", character: "Captain America" },
-    { image: comic8, title: "STAR WARS (2025) #14", creators: "Soule, Unzueta", rating: 4.3, series: "Star Wars", character: "Hulk" },
-    { image: comic1, title: "RED HULK (2025) #1", creators: "Parker, Stegman", rating: 4.7, series: "Avengers", character: "Hulk" },
-    { image: comic2, title: "ULTIMATE WOLVERINE (2025) #1", creators: "Hickman, Checchetto", rating: 4.8, series: "X-Men", character: "Wolverine" },
-    { image: comic3, title: "DEADPOOL (2025) #1", creators: "Duggan, Messina", rating: 4.6, series: "Deadpool", character: "Deadpool" },
-    { image: comic4, title: "THE AMAZING SPIDER (2025) #35", creators: "Wells, Romita", rating: 4.5, series: "Spider-Man", character: "Spider-Man" },
-    { image: comic5, title: "MOON KNIGHT: FIST OF KHONSHU (2025)", creators: "Mackay, Cappuccio", rating: 5.0, series: "Moon Knight", character: "Doctor Strange" },
-    { image: comic6, title: "CAPTAIN AMERICA (2025) #1", creators: "Thompson, Lee", rating: 4.9, series: "Captain America", character: "Captain America" },
-    { image: comic7, title: "MIRACLEMAN (2025)", creators: "Gaiman, Buckingham", rating: 4.8, series: "Avengers", character: "Thor" },
-    { image: comic8, title: "THE VITALS: TRUE BAD STORIES (2021)", creators: "Ewing, Schiti", rating: 4.7, series: "Venom", character: "Black Widow" },
-    { image: comic1, title: "MAJOR X (2019)", creators: "Liefeld", rating: 4.4, series: "X-Men", character: "Wolverine" },
-    { image: comic2, title: "VENOM (2025) #1", creators: "Ewing, Hitch", rating: 4.8, series: "Venom", character: "Hulk" },
-    { image: comic3, title: "CHEE!NTH (2023) #1", creators: "Buccellato, Berry", rating: 4.2, series: "Spider-Man", character: "Spider-Man" },
-    { image: comic4, title: "S.O.D.S. FIRST LOOK INFINITY COMIC (2025) #1", creators: "Cantwell, Ferreira", rating: 4.5, series: "Avengers", character: "Iron Man" },
-    { image: comic5, title: "MARVEL'S SPIDER-MAN 2 (2023) #1", creators: "Salazar, Barela, Niscola", rating: 4.6, series: "Spider-Man", character: "Spider-Man" },
-    { image: comic6, title: "9/11 20TH ANNIVERSARY TRIBUTE: THE FOUR FIVES (2021) #1", creators: "Various", rating: 4.9, series: "Avengers", character: "Captain America" },
-    { image: comic7, title: "THE VITALS: TRUE BAD STORIES (2021)", creators: "Howe, Noto", rating: 4.7, series: "X-Men", character: "Scarlet Witch" },
-    { image: comic8, title: "ULTIMATE SPIDER-MAN (2024) #10", creators: "Hickman, Checchetto", rating: 4.8, series: "Spider-Man", character: "Spider-Man" },
-  ];
+  const allComics = comics.map((comic) => ({
+    ...comic,
+    creators: comic.author || "",
+    rating: 4.5,
+    series: comic.category?.name || "Series",
+    character: comic.author?.split(",")[0] || "",
+  }));
 
   const filteredComics = useMemo(() => {
     let comics = [...allComics];
@@ -96,7 +85,7 @@ const Index = () => {
     }
 
     return comics;
-  }, [searchQuery, browseFilter]);
+  }, [searchQuery, browseFilter, allComics]);
 
   const isFiltered = searchQuery || browseFilter.value || viewAll;
 
