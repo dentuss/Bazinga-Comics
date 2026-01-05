@@ -1,11 +1,25 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 
+type AuthUser = {
+  id: number;
+  username: string;
+  email: string;
+  role?: string;
+  avatarUrl?: string;
+  firstName?: string;
+  lastName?: string;
+  dateOfBirth?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 type AuthContextType = {
-  user: { id: number; username: string; email: string; role?: string; avatarUrl?: string } | null;
+  user: AuthUser | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
+  updateUser: (updates: Partial<AuthUser>) => void;
   logout: () => void;
 };
 
@@ -35,6 +49,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [user]);
 
   const handleAuth = (tokenValue: string, payload: any) => {
+    const now = new Date().toISOString();
     setToken(tokenValue);
     setUser({
       id: payload.userId,
@@ -42,6 +57,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       email: payload.email,
       role: payload.role,
       avatarUrl: payload.avatarUrl,
+      firstName: payload.firstName,
+      lastName: payload.lastName,
+      dateOfBirth: payload.dateOfBirth,
+      createdAt: payload.createdAt ?? now,
+      updatedAt: payload.updatedAt ?? now,
     });
   };
 
@@ -67,7 +87,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        login,
+        register,
+        updateUser: (updates) => setUser((prev) => (prev ? { ...prev, ...updates } : prev)),
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
