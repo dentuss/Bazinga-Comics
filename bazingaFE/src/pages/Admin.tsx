@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -23,6 +23,18 @@ type Condition = {
   description: string;
 };
 
+type AdminUser = {
+  id: number;
+  username: string;
+  email: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  dateOfBirth?: string | null;
+  role?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 const initialFormState = {
   title: "",
   author: "",
@@ -35,11 +47,26 @@ const initialFormState = {
   image: "",
 };
 
+const initialUserFormState = {
+  username: "",
+  email: "",
+  password: "",
+  firstName: "",
+  lastName: "",
+  dateOfBirth: "",
+  role: "USER",
+};
+
 const Admin = () => {
   const { user, token } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [formState, setFormState] = useState(initialFormState);
+  const [userSearch, setUserSearch] = useState("");
+  const [userFormState, setUserFormState] = useState(initialUserFormState);
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+  const [editFormState, setEditFormState] = useState(initialUserFormState);
   const isAdmin = user?.role === "ADMIN";
 
   const { data: categories = [], isError: categoriesError } = useQuery<Category[]>({
@@ -52,10 +79,29 @@ const Admin = () => {
     queryFn: () => apiFetch<Condition[]>("/api/conditions"),
   });
 
+  const { data: users = [], isError: usersError } = useQuery<AdminUser[]>({
+    queryKey: ["admin-users", userSearch],
+    queryFn: () =>
+      token
+        ? apiFetch<AdminUser[]>(`/api/admin/users${userSearch.trim() ? `?query=${encodeURIComponent(userSearch)}` : ""}`, {
+            authToken: token,
+          })
+        : Promise.resolve([]),
+    enabled: Boolean(token),
+  });
+
   const hasAdminAccess = useMemo(() => Boolean(user && isAdmin), [user, isAdmin]);
 
   const updateField = (field: keyof typeof formState, value: string) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateUserField = (field: keyof typeof userFormState, value: string) => {
+    setUserFormState((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const updateEditField = (field: keyof typeof editFormState, value: string) => {
+    setEditFormState((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -94,6 +140,95 @@ const Admin = () => {
       toast({
         title: "Unable to add comic",
         description: error?.message || "Please check the form details and try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCreateUser = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!token) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in with an admin account to manage users.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await apiFetch("/api/admin/users", {
+        method: "POST",
+        authToken: token,
+        body: JSON.stringify({
+          username: userFormState.username,
+          email: userFormState.email,
+          password: userFormState.password,
+          firstName: userFormState.firstName || null,
+          lastName: userFormState.lastName || null,
+          dateOfBirth: userFormState.dateOfBirth || null,
+          role: userFormState.role || "USER",
+        }),
+      });
+      toast({
+        title: "User created",
+        description: `${userFormState.username} is ready to sign in.`,
+      });
+      setUserFormState(initialUserFormState);
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    } catch (error: any) {
+      toast({
+        title: "Unable to create user",
+        description: error?.message || "Please check the user details and try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditUser = (selected: AdminUser) => {
+    setEditingUser(selected);
+    setEditFormState({
+      username: selected.username || "",
+      email: selected.email || "",
+      password: "",
+      firstName: selected.firstName || "",
+      lastName: selected.lastName || "",
+      dateOfBirth: selected.dateOfBirth || "",
+      role: selected.role || "USER",
+    });
+  };
+
+  const handleUpdateUser = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!token || !editingUser) {
+      return;
+    }
+
+    try {
+      await apiFetch(`/api/admin/users/${editingUser.id}`, {
+        method: "PUT",
+        authToken: token,
+        body: JSON.stringify({
+          username: editFormState.username,
+          email: editFormState.email,
+          password: editFormState.password || undefined,
+          firstName: editFormState.firstName,
+          lastName: editFormState.lastName,
+          dateOfBirth: editFormState.dateOfBirth || null,
+          role: editFormState.role,
+        }),
+      });
+      toast({
+        title: "User updated",
+        description: `${editFormState.username} has been updated.`,
+      });
+      setEditingUser(null);
+      setEditFormState(initialUserFormState);
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    } catch (error: any) {
+      toast({
+        title: "Unable to update user",
+        description: error?.message || "Please review the changes and try again.",
         variant: "destructive",
       });
     }
@@ -296,6 +431,243 @@ const Admin = () => {
               </form>
             </CardContent>
           </Card>
+
+          <div className="pt-4 border-t border-muted">
+            <p className="text-sm text-primary font-semibold tracking-wide uppercase">User management</p>
+            <h2 className="text-2xl md:text-3xl font-black text-foreground mt-2">Manage accounts</h2>
+            <p className="text-muted-foreground mt-3 max-w-2xl">
+              Search, create, and update user profiles and roles. Changes are reflected immediately for each account.
+            </p>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card className="shadow-lg border-muted">
+              <CardHeader>
+                <CardTitle>Create user</CardTitle>
+                <CardDescription>Add a new account and assign a role.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form className="space-y-4" onSubmit={handleCreateUser}>
+                  <div className="space-y-2">
+                    <Label htmlFor="new-username">Username</Label>
+                    <Input
+                      id="new-username"
+                      value={userFormState.username}
+                      onChange={(event) => updateUserField("username", event.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="new-email">Email</Label>
+                    <Input
+                      id="new-email"
+                      type="email"
+                      value={userFormState.email}
+                      onChange={(event) => updateUserField("email", event.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">Password</Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      value={userFormState.password}
+                      onChange={(event) => updateUserField("password", event.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="new-first-name">First name</Label>
+                      <Input
+                        id="new-first-name"
+                        value={userFormState.firstName}
+                        onChange={(event) => updateUserField("firstName", event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="new-last-name">Last name</Label>
+                      <Input
+                        id="new-last-name"
+                        value={userFormState.lastName}
+                        onChange={(event) => updateUserField("lastName", event.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="new-dob">Date of birth</Label>
+                      <Input
+                        id="new-dob"
+                        type="date"
+                        value={userFormState.dateOfBirth}
+                        onChange={(event) => updateUserField("dateOfBirth", event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="new-role">Role</Label>
+                      <Select
+                        value={userFormState.role}
+                        onValueChange={(value) => updateUserField("role", value)}
+                      >
+                        <SelectTrigger id="new-role">
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="USER">USER</SelectItem>
+                          <SelectItem value="EDITOR">EDITOR</SelectItem>
+                          <SelectItem value="ADMIN">ADMIN</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <Button type="submit">Create user</Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-lg border-muted">
+              <CardHeader>
+                <CardTitle>Search users</CardTitle>
+                <CardDescription>Find users by username, email, or name.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Input
+                  placeholder="Search users..."
+                  value={userSearch}
+                  onChange={(event) => setUserSearch(event.target.value)}
+                />
+                {usersError && <p className="text-sm text-destructive">Unable to load users right now.</p>}
+                {!usersError && !users.length && (
+                  <p className="text-sm text-muted-foreground">No users found yet.</p>
+                )}
+                <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                  {users.map((entry) => (
+                    <div key={entry.id} className="border border-muted rounded-lg p-3 space-y-1">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="font-semibold">{entry.username}</p>
+                          <p className="text-sm text-muted-foreground">{entry.email}</p>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={() => handleEditUser(entry)}>
+                          Edit
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {entry.firstName || entry.lastName
+                          ? `${entry.firstName ?? ""} ${entry.lastName ?? ""}`.trim()
+                          : "No name on file"}{" "}
+                        · Role: {entry.role || "USER"}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {editingUser && (
+            <Card className="shadow-lg border-muted">
+              <CardHeader>
+                <CardTitle>Edit user</CardTitle>
+                <CardDescription>Update profile details or reset the password.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form className="space-y-4" onSubmit={handleUpdateUser}>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-username">Username</Label>
+                      <Input
+                        id="edit-username"
+                        value={editFormState.username}
+                        onChange={(event) => updateEditField("username", event.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-email">Email</Label>
+                      <Input
+                        id="edit-email"
+                        type="email"
+                        value={editFormState.email}
+                        onChange={(event) => updateEditField("email", event.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-password">New password</Label>
+                    <Input
+                      id="edit-password"
+                      type="password"
+                      value={editFormState.password}
+                      onChange={(event) => updateEditField("password", event.target.value)}
+                      placeholder="Leave blank to keep current password"
+                    />
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-first-name">First name</Label>
+                      <Input
+                        id="edit-first-name"
+                        value={editFormState.firstName}
+                        onChange={(event) => updateEditField("firstName", event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-last-name">Last name</Label>
+                      <Input
+                        id="edit-last-name"
+                        value={editFormState.lastName}
+                        onChange={(event) => updateEditField("lastName", event.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-dob">Date of birth</Label>
+                      <Input
+                        id="edit-dob"
+                        type="date"
+                        value={editFormState.dateOfBirth}
+                        onChange={(event) => updateEditField("dateOfBirth", event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-role">Role</Label>
+                      <Select
+                        value={editFormState.role}
+                        onValueChange={(value) => updateEditField("role", value)}
+                      >
+                        <SelectTrigger id="edit-role">
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="USER">USER</SelectItem>
+                          <SelectItem value="EDITOR">EDITOR</SelectItem>
+                          <SelectItem value="ADMIN">ADMIN</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    <Button type="submit">Save changes</Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setEditingUser(null);
+                        setEditFormState(initialUserFormState);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </main>
       <Footer />

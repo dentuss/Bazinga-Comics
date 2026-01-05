@@ -55,9 +55,9 @@ const Header = () => {
             <NavigationMenu className="hidden lg:flex">
               <NavigationMenuList className="gap-0">
                 <NavigationMenuItem>
-                  <a href="#news" className="text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors px-4 py-2">
+                  <Link to="/news" className="text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors px-4 py-2">
                     NEWS
-                  </a>
+                  </Link>
                 </NavigationMenuItem>
                 
                 <NavigationMenuItem>
