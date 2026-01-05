@@ -39,6 +39,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const { token } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
 
+  const mapApiItems = (response: ApiCartItem[]) =>
+    response.map((item) => ({
+      id: item.comic.id?.toString() || String(item.comicId),
+      title: item.comic.title,
+      image: item.comic.image,
+      creators: item.comic.author || "",
+      price: Number(item.comic.price),
+      quantity: item.quantity,
+    }));
+
   useEffect(() => {
     const loadCart = async () => {
       if (!token) {
@@ -46,16 +56,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       const response = await apiFetch<ApiCartItem[]>("/api/cart", { authToken: token });
-      setItems(
-        response.map((item) => ({
-          id: item.comic.id?.toString() || String(item.comicId),
-          title: item.comic.title,
-          image: item.comic.image,
-          creators: item.comic.author || "",
-          price: Number(item.comic.price),
-          quantity: item.quantity,
-        }))
-      );
+      setItems(mapApiItems(response));
     };
 
     loadCart().catch(() => setItems([]));
@@ -66,18 +67,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     apiFetch<ApiCartItem[]>("/api/cart", {
       method: "POST",
       authToken: token,
-      body: JSON.stringify({ comicId: item.id, quantity: 1 }),
+      body: JSON.stringify({ comicId: Number(item.id), quantity: 1 }),
     }).then((res) => {
-      setItems(
-        res.map((i) => ({
-          id: i.comic.id?.toString() || String(i.comicId),
-          title: i.comic.title,
-          image: i.comic.image,
-          creators: i.comic.author || "",
-          price: Number(i.comic.price),
-          quantity: i.quantity,
-        }))
-      );
+      setItems(mapApiItems(res));
     });
   };
 
@@ -87,41 +79,36 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       method: "DELETE",
       authToken: token,
     }).then((res) => {
-      setItems(
-        res.map((i) => ({
-          id: i.comic.id?.toString() || String(i.comicId),
-          title: i.comic.title,
-          image: i.comic.image,
-          creators: i.comic.author || "",
-          price: Number(i.comic.price),
-          quantity: i.quantity,
-        }))
-      );
+      setItems(mapApiItems(res));
     });
   };
 
   const updateQuantity = (id: string, quantity: number) => {
     if (!token) return;
+    if (quantity <= 0) {
+      removeFromCart(id);
+      return;
+    }
     apiFetch<ApiCartItem[]>("/api/cart", {
       method: "PUT",
       authToken: token,
-      body: JSON.stringify({ comicId: id, quantity }),
+      body: JSON.stringify({ comicId: Number(id), quantity }),
     }).then((res) => {
-      setItems(
-        res.map((i) => ({
-          id: i.comic.id?.toString() || String(i.comicId),
-          title: i.comic.title,
-          image: i.comic.image,
-          creators: i.comic.author || "",
-          price: Number(i.comic.price),
-          quantity: i.quantity,
-        }))
-      );
+      setItems(mapApiItems(res));
     });
   };
 
   const clearCart = () => {
-    setItems([]);
+    if (!token) {
+      setItems([]);
+      return;
+    }
+    apiFetch<ApiCartItem[]>("/api/cart", {
+      method: "DELETE",
+      authToken: token,
+    }).then((res) => {
+      setItems(mapApiItems(res));
+    });
   };
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);

@@ -32,6 +32,15 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
   const { token } = useAuth();
   const [items, setItems] = useState<WishlistItem[]>([]);
 
+  const mapApiItems = (response: any[]) =>
+    response.map((item) => ({
+      id: item.comic.id.toString(),
+      title: item.comic.title,
+      image: item.comic.image,
+      creators: item.comic.author || "",
+      price: Number(item.comic.price || 0),
+    }));
+
   useEffect(() => {
     const loadWishlist = async () => {
       if (!token) {
@@ -39,15 +48,7 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       const response = await apiFetch<any[]>("/api/wishlist", { authToken: token });
-      setItems(
-        response.map((item) => ({
-          id: item.comic.id.toString(),
-          title: item.comic.title,
-          image: item.comic.image,
-          creators: item.comic.author || "",
-          price: Number(item.comic.price || 0),
-        }))
-      );
+      setItems(mapApiItems(response));
     };
 
     loadWishlist().catch(() => setItems([]));
@@ -58,32 +59,16 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
     apiFetch<any[]>("/api/wishlist", {
       method: "POST",
       authToken: token,
-      body: JSON.stringify({ comicId: item.id }),
+      body: JSON.stringify({ comicId: Number(item.id) }),
     }).then((res) => {
-      setItems(
-        res.map((wishlistItem) => ({
-          id: wishlistItem.comic.id.toString(),
-          title: wishlistItem.comic.title,
-          image: wishlistItem.comic.image,
-          creators: wishlistItem.comic.author || "",
-          price: Number(wishlistItem.comic.price || 0),
-        }))
-      );
+      setItems(mapApiItems(res));
     });
   };
 
   const removeFromWishlist = (id: string) => {
     if (!token) return;
     apiFetch<any[]>(`/api/wishlist/${id}`, { method: "DELETE", authToken: token }).then((res) => {
-      setItems(
-        res.map((wishlistItem) => ({
-          id: wishlistItem.comic.id.toString(),
-          title: wishlistItem.comic.title,
-          image: wishlistItem.comic.image,
-          creators: wishlistItem.comic.author || "",
-          price: Number(wishlistItem.comic.price || 0),
-        }))
-      );
+      setItems(mapApiItems(res));
     });
   };
 
