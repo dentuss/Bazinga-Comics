@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 
 type AuthContextType = {
-  user: { id: number; username: string; email: string; avatarUrl?: string } | null;
+  user: { id: number; username: string; email: string; role?: string; avatarUrl?: string } | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
@@ -40,6 +40,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       id: payload.userId,
       username: payload.username,
       email: payload.email,
+      role: payload.role,
       avatarUrl: payload.avatarUrl,
     });
   };

@@ -204,6 +204,13 @@ const Header = () => {
                 <Search className="h-5 w-5" />
               </Button>
             )}
+            {user?.role === "ADMIN" && (
+              <Link to="/admin" className="hidden md:flex">
+                <Button variant="outline" className="text-xs font-semibold tracking-wide">
+                  ADMIN
+                </Button>
+              </Link>
+            )}
             <Link to="/wishlist">
               <Button variant="ghost" size="icon" className="relative">
                 <Heart className="h-5 w-5" />
