@@ -79,8 +79,13 @@ public class CartController {
         Cart cart = cartRepository.findByUser(user).orElseThrow();
         Comic comic = comicRepository.findById(request.getComicId()).orElseThrow();
         CartItem item = cartItemRepository.findByCartAndComic(cart, comic).orElseThrow();
-        item.setQuantity(request.getQuantity());
-        cartItemRepository.save(item);
+        Integer quantity = request.getQuantity();
+        if (quantity == null || quantity <= 0) {
+            cartItemRepository.delete(item);
+        } else {
+            item.setQuantity(quantity);
+            cartItemRepository.save(item);
+        }
         return getCart(authentication);
     }
 
@@ -90,6 +95,18 @@ public class CartController {
         Cart cart = cartRepository.findByUser(user).orElseThrow();
         Comic comic = comicRepository.findById(comicId).orElseThrow();
         cartItemRepository.findByCartAndComic(cart, comic).ifPresent(cartItemRepository::delete);
+        return getCart(authentication);
+    }
+
+    @DeleteMapping
+    public ResponseEntity<List<CartItem>> clearCart(Authentication authentication) {
+        User user = userRepository.findByEmail(authentication.getName()).orElseThrow();
+        Cart cart = cartRepository.findByUser(user).orElseGet(() -> {
+            Cart newCart = new Cart();
+            newCart.setUser(user);
+            return cartRepository.save(newCart);
+        });
+        cartItemRepository.deleteByCart(cart);
         return getCart(authentication);
     }
 }

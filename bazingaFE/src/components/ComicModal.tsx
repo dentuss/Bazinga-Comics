@@ -14,6 +14,7 @@ interface ComicModalProps {
   isOpen: boolean;
   onClose: () => void;
   comic: {
+    id: number;
     title: string;
     image: string;
     creators: string;
@@ -29,7 +30,7 @@ const ComicModal = ({ isOpen, onClose, comic }: ComicModalProps) => {
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const [added, setAdded] = useState(false);
   const price = comic.price || 4.99;
-  const comicId = comic.title.toLowerCase().replace(/\s+/g, '-');
+  const comicId = comic.id.toString();
   const inWishlist = isInWishlist(comicId);
 
   const handleAddToCart = () => {
