@@ -26,40 +26,40 @@ public class ComicController {
     private final ComicConditionRepository comicConditionRepository;
 
     public ComicController(ComicRepository comicRepository, CategoryRepository categoryRepository,
-            ComicConditionRepository comicConditionRepository) {
-        this.comicRepository = comicRepository;
-        this.categoryRepository = categoryRepository;
-        this.comicConditionRepository = comicConditionRepository;
-    }
-
-    @GetMapping
-    public List<Comic> getAll() {
-        return comicRepository.findAll();
-    }
-
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('ADMIN')")
-    public Comic create(@RequestBody ComicCreateRequest request) {
-        Comic comic = new Comic();
-        comic.setTitle(request.getTitle());
-        comic.setAuthor(request.getAuthor());
-        comic.setIsbn(request.getIsbn());
-        comic.setDescription(request.getDescription());
-        comic.setPublishedYear(request.getPublishedYear());
-        comic.setPrice(request.getPrice());
-        comic.setImage(request.getImage());
-
-        if (request.getCategoryId() != null) {
-            Category category = categoryRepository.findById(request.getCategoryId()).orElseThrow();
-            comic.setCategory(category);
+                ComicConditionRepository comicConditionRepository) {
+            this.comicRepository = comicRepository;
+            this.categoryRepository = categoryRepository;
+            this.comicConditionRepository = comicConditionRepository;
         }
 
-        if (request.getConditionId() != null) {
-            ComicCondition condition = comicConditionRepository.findById(request.getConditionId()).orElseThrow();
-            comic.setCondition(condition);
+        @GetMapping
+        public List<Comic> getAll() {
+            return comicRepository.findAll();
         }
 
-        return comicRepository.save(comic);
+        @PostMapping
+        @ResponseStatus(HttpStatus.CREATED)
+        @PreAuthorize("hasRole('ADMIN')")
+        public Comic create(@RequestBody ComicCreateRequest request) {
+            Comic comic = new Comic();
+            comic.setTitle(request.getTitle());
+            comic.setAuthor(request.getAuthor());
+            comic.setIsbn(request.getIsbn());
+            comic.setDescription(request.getDescription());
+            comic.setPublishedYear(request.getPublishedYear());
+            comic.setPrice(request.getPrice());
+            comic.setImage(request.getImage());
+
+            if (request.getCategoryId() != null) {
+                Category category = categoryRepository.findById(request.getCategoryId()).orElseThrow();
+                comic.setCategory(category);
+            }
+
+            if (request.getConditionId() != null) {
+                ComicCondition condition = comicConditionRepository.findById(request.getConditionId()).orElseThrow();
+                comic.setCondition(condition);
+            }
+
+            return comicRepository.save(comic);
+        }
     }
-}
