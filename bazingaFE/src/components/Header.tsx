@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Search, User, Menu, ShoppingCart, Heart, X } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -9,6 +10,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
+import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { Link, useNavigate } from "react-router-dom";
@@ -16,6 +18,7 @@ import { Link, useNavigate } from "react-router-dom";
 const Header = () => {
   const { totalItems } = useCart();
   const { totalItems: wishlistItems } = useWishlist();
+  const { user } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
@@ -221,12 +224,25 @@ const Header = () => {
                 )}
               </Button>
             </Link>
-            <Link to="/auth">
-              <Button variant="default" className="hidden md:flex">
-                <User className="h-4 w-4 mr-2" />
-                SIGN IN
-              </Button>
-            </Link>
+            {user ? (
+              <Link to="/profile" className="flex items-center" aria-label="View profile">
+                <Avatar className="h-9 w-9 border border-primary/20 ring-1 ring-primary/10 transition hover:ring-primary/30">
+                  {user.avatarUrl ? (
+                    <AvatarImage src={user.avatarUrl} alt={`${user.username} profile`} />
+                  ) : null}
+                  <AvatarFallback className="bg-muted text-muted-foreground">
+                    <User className="h-4 w-4" />
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
+            ) : (
+              <Link to="/auth">
+                <Button variant="default" className="hidden md:flex">
+                  <User className="h-4 w-4 mr-2" />
+                  SIGN IN
+                </Button>
+              </Link>
+            )}
             <Button variant="ghost" size="icon" className="lg:hidden">
               <Menu className="h-5 w-5" />
             </Button>
