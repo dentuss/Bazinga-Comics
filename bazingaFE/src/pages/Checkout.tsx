@@ -36,9 +36,9 @@ const Checkout = () => {
           )
         );
       }
+      await clearCart();
       setIsProcessing(false);
       setOrderComplete(true);
-      clearCart();
       toast({
         title: "Order Placed Successfully!",
         description: "Thank you for your purchase. Your comics will be delivered soon.",
