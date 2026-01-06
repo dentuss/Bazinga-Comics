@@ -144,6 +144,18 @@ CREATE TABLE libraries (
 ALTER TABLE comics
     ADD COLUMN comic_type ENUM('ONLY_DIGITAL','PHYSICAL_COPY') NOT NULL;
 
+ALTER TABLE cart_items
+    ADD COLUMN purchase_type ENUM('ORIGINAL','DIGITAL') NOT NULL DEFAULT 'ORIGINAL',
+    ADD COLUMN unit_price DECIMAL(10,2) NOT NULL DEFAULT 0;
+
+UPDATE cart_items ci
+    JOIN comics c ON ci.comic_id = c.id
+    SET ci.unit_price = COALESCE(c.price, 0);
+
+ALTER TABLE cart_items
+DROP INDEX uk_cart_items_cart_comic,
+    ADD CONSTRAINT uk_cart_items_cart_comic_type UNIQUE (cart_id, comic_id, purchase_type);
+
 CREATE INDEX idx_comics_category ON comics(category_id);
 CREATE INDEX idx_comics_condition ON comics(condition_id);
 CREATE INDEX idx_cart_items_cart ON cart_items(cart_id);

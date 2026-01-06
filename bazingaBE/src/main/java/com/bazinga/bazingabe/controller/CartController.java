@@ -68,12 +68,13 @@ public class CartController {
         if (comic.getComicType() == ComicType.ONLY_DIGITAL) {
             purchaseType = PurchaseType.DIGITAL;
         }
+        PurchaseType finalPurchaseType = purchaseType;
         CartItem cartItem = cartItemRepository.findByCartAndComicAndPurchaseType(cart, comic, purchaseType)
                 .orElseGet(() -> {
             CartItem newItem = new CartItem();
             newItem.setCart(cart);
             newItem.setComic(comic);
-            newItem.setPurchaseType(purchaseType);
+            newItem.setPurchaseType(finalPurchaseType);
             newItem.setQuantity(0);
             return newItem;
         });
