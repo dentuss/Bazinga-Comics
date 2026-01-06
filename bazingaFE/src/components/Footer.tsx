@@ -1,26 +1,20 @@
 import { Facebook, Twitter, Instagram, Youtube, Twitch } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   const links = [
-    { label: "ABOUT BAZINGA", href: "#" },
-    { label: "HELP/FAQS", href: "#" },
-    { label: "CAREERS", href: "#" },
-    { label: "INTERNSHIPS", href: "#" },
-  ];
-
-  const additionalLinks = [
-    { label: "ADVERTISING", href: "#" },
-    { label: "DISNEY+", href: "#" },
-    { label: "MARVELHQ.COM", href: "#" },
-    { label: "REDEEM DIGITAL COMICS", href: "#" },
+    { label: "ABOUT BAZINGA", href: "/under-construction" },
+    { label: "HELP/FAQS", href: "/under-construction" },
+    { label: "CAREERS", href: "/under-construction" },
+    { label: "INTERNSHIPS", href: "/under-construction" },
   ];
 
   const socialLinks = [
-    { icon: Facebook, href: "#", label: "Facebook" },
-    { icon: Twitter, href: "#", label: "Twitter" },
-    { icon: Instagram, href: "#", label: "Instagram" },
-    { icon: Youtube, href: "#", label: "YouTube" },
-    { icon: Twitch, href: "#", label: "Twitch" },
+    { icon: Facebook, href: "/under-construction", label: "Facebook" },
+    { icon: Twitter, href: "/under-construction", label: "Twitter" },
+    { icon: Instagram, href: "/under-construction", label: "Instagram" },
+    { icon: Youtube, href: "/under-construction", label: "YouTube" },
+    { icon: Twitch, href: "/under-construction", label: "Twitch" },
   ];
 
   const legalLinks = [
@@ -42,27 +36,16 @@ const Footer = () => {
         </div>
 
         {/* Main Links */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 gap-8 mb-8">
           <div className="space-y-3">
             {links.map((link) => (
-              <a
+              <Link
                 key={link.label}
-                href={link.href}
+                to={link.href}
                 className="block text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors"
               >
                 {link.label}
-              </a>
-            ))}
-          </div>
-          <div className="space-y-3">
-            {additionalLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                className="block text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors"
-              >
-                {link.label}
-              </a>
+              </Link>
             ))}
           </div>
         </div>
@@ -72,14 +55,14 @@ const Footer = () => {
           <h3 className="text-sm font-bold mb-4">FOLLOW BAZINGA</h3>
           <div className="flex gap-4">
             {socialLinks.map((social) => (
-              <a
+              <Link
                 key={social.label}
-                href={social.href}
+                to={social.href}
                 className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary hover:bg-primary hover:text-primary-foreground transition-colors"
                 aria-label={social.label}
               >
                 <social.icon className="h-5 w-5" />
-              </a>
+              </Link>
             ))}
           </div>
         </div>
@@ -90,9 +73,9 @@ const Footer = () => {
             {legalLinks.map((link, index) => (
               <span key={index}>
                 {index < legalLinks.length - 1 ? (
-                  <a href="#" className="hover:text-foreground transition-colors">
+                  <Link to="/under-construction" className="hover:text-foreground transition-colors">
                     {link}
-                  </a>
+                  </Link>
                 ) : (
                   <span>{link}</span>
                 )}

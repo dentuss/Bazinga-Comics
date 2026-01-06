@@ -2,9 +2,12 @@ import { useState } from "react";
 
 interface BrowseByFilterProps {
   onFilterChange?: (type: string, value: string) => void;
+  seriesOptions: string[];
+  characterOptions: string[];
+  creatorOptions: string[];
 }
 
-const BrowseByFilter = ({ onFilterChange }: BrowseByFilterProps) => {
+const BrowseByFilter = ({ onFilterChange, seriesOptions, characterOptions, creatorOptions }: BrowseByFilterProps) => {
   const [activeTab, setActiveTab] = useState("series");
   const [selectedValue, setSelectedValue] = useState("");
 
@@ -12,45 +15,6 @@ const BrowseByFilter = ({ onFilterChange }: BrowseByFilterProps) => {
     { id: "series", label: "SERIES" },
     { id: "character", label: "CHARACTER" },
     { id: "creator", label: "CREATOR" },
-  ];
-
-  const seriesOptions = [
-    "All Series",
-    "X-Men",
-    "Spider-Man",
-    "Avengers",
-    "Deadpool",
-    "Venom",
-    "Star Wars",
-    "Moon Knight",
-    "Captain America",
-  ];
-
-  const characterOptions = [
-    "All Characters",
-    "Spider-Man",
-    "Wolverine",
-    "Iron Man",
-    "Thor",
-    "Captain America",
-    "Deadpool",
-    "Hulk",
-    "Black Widow",
-    "Doctor Strange",
-    "Scarlet Witch",
-  ];
-
-  const creatorOptions = [
-    "All Creators",
-    "Jonathan Hickman",
-    "Gerry Duggan",
-    "Jason Aaron",
-    "Al Ewing",
-    "Chip Zdarsky",
-    "Donny Cates",
-    "Ryan Stegman",
-    "Pepe Larraz",
-    "Marco Checchetto",
   ];
 
   const getOptions = () => {

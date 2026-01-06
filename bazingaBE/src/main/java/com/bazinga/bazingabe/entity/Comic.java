@@ -36,6 +36,9 @@ public class Comic {
     @Column(length = 2000)
     private String description;
 
+    @Column(name = "main_character", length = 255)
+    private String mainCharacter;
+
     @Column(name = "published_year")
     private Integer publishedYear;
 
@@ -113,6 +116,14 @@ public class Comic {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getMainCharacter() {
+        return mainCharacter;
+    }
+
+    public void setMainCharacter(String mainCharacter) {
+        this.mainCharacter = mainCharacter;
     }
 
     public Integer getPublishedYear() {

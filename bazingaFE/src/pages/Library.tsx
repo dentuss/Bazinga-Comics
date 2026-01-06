@@ -72,9 +72,11 @@ const Library = () => {
                   <div className="mt-3 space-y-2">
                     <h3 className="text-base font-bold text-foreground line-clamp-2">{item.comic.title}</h3>
                     <p className="text-xs text-muted-foreground">{item.comic.author}</p>
-                    <Button variant="outline" size="sm" className="w-full">
-                      Read now
-                    </Button>
+                    <Link to={`/read/${item.comic.id}`}>
+                      <Button variant="outline" size="sm" className="w-full">
+                        Read now
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               ))}
