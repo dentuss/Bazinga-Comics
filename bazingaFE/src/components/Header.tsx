@@ -23,7 +23,13 @@ const Header = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
-  const comicsSubmenu = ["Release Calendar", "Bazinga Unlimited", "Stormbreakers", "Reading Guides", "All Comics"];
+  const comicsSubmenu = [
+    { label: "Digital Read", action: "digital" },
+    { label: "Bazinga Unlimited", href: "/bazinga-unlimited" },
+    { label: "Stormbreakers", anchor: "#stormbreakers" },
+    { label: "Reading Guides", anchor: "#reading-guides" },
+    { label: "All Comics", action: "all" },
+  ];
   const charactersSubmenu = ["Browse All", "Teams", "Avengers", "X-Men", "Guardians"];
   const moviesSubmenu = ["Latest Releases", "Upcoming", "Box Office", "News"];
   const tvShowsSubmenu = ["Streaming Now", "Upcoming Series", "Episode Guides"];
@@ -37,8 +43,8 @@ const Header = () => {
     }
   };
 
-  const handleAllComicsClick = () => {
-    navigate("/?view=all");
+  const handleComicsView = (view: "all" | "digital") => {
+    navigate(`/?view=${view}`);
   };
 
   return (
@@ -67,21 +73,29 @@ const Header = () => {
                   <NavigationMenuContent>
                     <div className="w-[200px] bg-white text-black p-2 shadow-lg border border-gray-200">
                       {comicsSubmenu.map((item) => (
-                        item === "All Comics" ? (
+                        item.action ? (
                           <button
-                            key={item}
-                            onClick={handleAllComicsClick}
+                            key={item.label}
+                            onClick={() => handleComicsView(item.action)}
                             className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded-sm transition-colors"
                           >
-                            {item}
+                            {item.label}
                           </button>
-                        ) : (
-                          <a
-                            key={item}
-                            href={`#${item.toLowerCase().replace(/\s+/g, '-')}`}
+                        ) : item.href ? (
+                          <Link
+                            key={item.label}
+                            to={item.href}
                             className="block px-4 py-2 text-sm hover:bg-gray-100 rounded-sm transition-colors"
                           >
-                            {item}
+                            {item.label}
+                          </Link>
+                        ) : (
+                          <a
+                            key={item.label}
+                            href={item.anchor}
+                            className="block px-4 py-2 text-sm hover:bg-gray-100 rounded-sm transition-colors"
+                          >
+                            {item.label}
                           </a>
                         )
                       ))}

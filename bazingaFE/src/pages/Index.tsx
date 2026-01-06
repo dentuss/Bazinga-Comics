@@ -20,6 +20,7 @@ export interface ComicDto {
   image: string;
   price: number;
   category?: { name: string };
+  comicType?: string;
 }
 
 const Index = () => {
@@ -34,7 +35,9 @@ const Index = () => {
   });
 
   const searchQuery = searchParams.get("search") || "";
-  const viewAll = searchParams.get("view") === "all";
+  const viewParam = searchParams.get("view");
+  const viewAll = viewParam === "all";
+  const viewDigital = viewParam === "digital";
 
   const handleComicClick = (comic: any) => {
     setSelectedComic(comic);
@@ -53,13 +56,17 @@ const Index = () => {
   const allComics = comics.map((comic) => ({
     ...comic,
     creators: comic.author || "",
-    rating: 4.5,
     series: comic.category?.name || "Series",
     character: comic.author?.split(",")[0] || "",
+    comicType: comic.comicType || "PHYSICAL_COPY",
   }));
 
+  const digitalReadComics = allComics.filter(
+    (comic) => comic.comicType === "ONLY_DIGITAL" || comic.comicType === "PHYSICAL_COPY"
+  );
+
   const filteredComics = useMemo(() => {
-    let comics = [...allComics];
+    let comics = [...(viewDigital ? digitalReadComics : allComics)];
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -85,12 +92,12 @@ const Index = () => {
     }
 
     return comics;
-  }, [searchQuery, browseFilter, allComics]);
+  }, [searchQuery, browseFilter, viewDigital, allComics, digitalReadComics]);
 
-  const isFiltered = searchQuery || browseFilter.value || viewAll;
+  const isFiltered = searchQuery || browseFilter.value || viewAll || viewDigital;
 
   const newThisWeek = allComics.slice(0, 12);
-  const bestSelling = allComics.slice(4, 10);
+  const digitalRead = digitalReadComics.slice(4, 10);
   const readForFree = allComics.slice(10, 16);
 
   return (
@@ -105,7 +112,13 @@ const Index = () => {
           <section className="container mx-auto px-4 py-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-black text-foreground">
-                {searchQuery ? `SEARCH RESULTS FOR "${searchQuery.toUpperCase()}"` : viewAll ? "ALL COMICS" : "FILTERED RESULTS"}
+                {searchQuery
+                  ? `SEARCH RESULTS FOR "${searchQuery.toUpperCase()}"`
+                  : viewAll
+                    ? "ALL COMICS"
+                    : viewDigital
+                      ? "DIGITAL READ"
+                      : "FILTERED RESULTS"}
                 <span className="text-muted-foreground text-lg font-normal ml-2">({filteredComics.length} comics)</span>
               </h2>
               <Button variant="outline" onClick={clearFilters}>
@@ -120,6 +133,11 @@ const Index = () => {
                   className="cursor-pointer group"
                 >
                   <div className="relative overflow-hidden rounded-lg shadow-lg transition-transform duration-300 group-hover:-translate-y-2">
+                    {comic.comicType === "ONLY_DIGITAL" && (
+                      <span className="absolute left-2 top-2 z-10 rounded-full bg-yellow-400 px-2 py-1 text-[10px] font-bold uppercase text-black shadow">
+                        Digital Exclusive
+                      </span>
+                    )}
                     <img
                       src={comic.image}
                       alt={comic.title}
@@ -152,9 +170,10 @@ const Index = () => {
               onComicClick={handleComicClick}
             />
             <ComicSection 
-              id="best-selling" 
-              title="BEST SELLING DIGITAL COMICS" 
-              comics={bestSelling}
+              id="digital-read" 
+              title="DIGITAL READ" 
+              comics={digitalRead}
+              viewAllHref="/?view=digital"
               onComicClick={handleComicClick}
             />
             <UnlimitedBanner />

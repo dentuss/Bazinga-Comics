@@ -8,10 +8,13 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, Link } from "react-router-dom";
 import { CreditCard, Check } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { apiFetch } from "@/lib/api";
 
 const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
   const { toast } = useToast();
+  const { token } = useAuth();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
@@ -20,7 +23,24 @@ const Checkout = () => {
     e.preventDefault();
     setIsProcessing(true);
     
-    setTimeout(() => {
+    setTimeout(async () => {
+      if (token) {
+        const digitalItems = items.filter(
+          (item) =>
+            item.comicType === "ONLY_DIGITAL" ||
+            item.comicType === "PHYSICAL_COPY" ||
+            !item.comicType
+        );
+        await Promise.all(
+          digitalItems.map((item) =>
+            apiFetch("/api/library", {
+              method: "POST",
+              authToken: token,
+              body: JSON.stringify({ comicId: Number(item.id) }),
+            }).catch(() => null)
+          )
+        );
+      }
       setIsProcessing(false);
       setOrderComplete(true);
       clearCart();

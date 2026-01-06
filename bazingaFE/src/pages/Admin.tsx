@@ -45,6 +45,7 @@ const initialFormState = {
   categoryId: "",
   price: "",
   image: "",
+  comicType: "PHYSICAL_COPY",
 };
 
 const initialUserFormState = {
@@ -129,6 +130,7 @@ const Admin = () => {
           categoryId: formState.categoryId ? Number(formState.categoryId) : null,
           price: formState.price ? Number(formState.price) : null,
           image: formState.image || null,
+          comicType: formState.comicType,
         }),
       });
       toast({
@@ -404,6 +406,21 @@ const Admin = () => {
                             {conditionsError ? "Unable to load conditions" : "No conditions available"}
                           </SelectItem>
                         )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="comicType">Comic type</Label>
+                    <Select
+                      value={formState.comicType}
+                      onValueChange={(value) => updateField("comicType", value)}
+                    >
+                      <SelectTrigger id="comicType">
+                        <SelectValue placeholder="Select comic type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PHYSICAL_COPY">Physical Copy</SelectItem>
+                        <SelectItem value="ONLY_DIGITAL">Only Digital</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

@@ -5,10 +5,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Star, ShoppingCart, Check, Heart } from "lucide-react";
+import { ShoppingCart, Check, Heart } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ComicModalProps {
   isOpen: boolean;
@@ -18,18 +19,27 @@ interface ComicModalProps {
     title: string;
     image: string;
     creators: string;
-    rating: number;
     year?: string;
     description?: string;
     price?: number;
+    comicType?: string;
   };
 }
 
 const ComicModal = ({ isOpen, onClose, comic }: ComicModalProps) => {
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { user } = useAuth();
   const [added, setAdded] = useState(false);
   const price = comic.price || 4.99;
+  const subscriptionType = user?.subscriptionType?.toLowerCase();
+  const isPremium = subscriptionType === "premium";
+  const isUnlimited = subscriptionType === "unlimited";
+  const isDigitalExclusive = comic.comicType === "ONLY_DIGITAL";
+  const isDigitalRead =
+    comic.comicType === "ONLY_DIGITAL" || comic.comicType === "PHYSICAL_COPY" || !comic.comicType;
+  const isUnlimitedDigital = isUnlimited && isDigitalRead;
+  const discountedPrice = isUnlimitedDigital ? 0 : isPremium ? price * 0.5 : price;
   const comicId = comic.id.toString();
   const inWishlist = isInWishlist(comicId);
 
@@ -74,17 +84,19 @@ const ComicModal = ({ isOpen, onClose, comic }: ComicModalProps) => {
             />
           </div>
           <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <span className="text-3xl font-bold text-primary">${price.toFixed(2)}</span>
-              <div className="flex items-center gap-1">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-4 w-4 ${
-                      i < comic.rating ? 'fill-primary text-primary' : 'text-muted'
-                    }`}
-                  />
-                ))}
+            <div className="flex flex-col gap-2">
+              {isDigitalExclusive && (
+                <span className="text-xs font-semibold uppercase text-yellow-500">Digital Exclusive</span>
+              )}
+              <div className="flex flex-wrap items-baseline gap-3">
+                {isUnlimitedDigital ? (
+                  <span className="text-2xl font-bold text-primary">FREE WITH UNLIMITED</span>
+                ) : (
+                  <span className="text-3xl font-bold text-primary">${discountedPrice.toFixed(2)}</span>
+                )}
+                {(isPremium || isUnlimitedDigital) && (
+                  <span className="text-sm text-muted-foreground line-through">${price.toFixed(2)}</span>
+                )}
               </div>
             </div>
             <div>
@@ -118,7 +130,7 @@ const ComicModal = ({ isOpen, onClose, comic }: ComicModalProps) => {
                 ) : (
                   <>
                     <ShoppingCart className="h-4 w-4 mr-2" />
-                    ADD TO CART - ${price.toFixed(2)}
+                    {isUnlimitedDigital ? "ADD TO CART - FREE" : `ADD TO CART - $${discountedPrice.toFixed(2)}`}
                   </>
                 )}
               </Button>
