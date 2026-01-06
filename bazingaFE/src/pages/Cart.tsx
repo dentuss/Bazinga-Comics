@@ -51,6 +51,9 @@ const Cart = () => {
                   <div>
                     <h3 className="font-bold text-lg line-clamp-2">{item.title}</h3>
                     <p className="text-sm text-muted-foreground">{item.creators}</p>
+                    <p className="text-xs font-semibold uppercase text-muted-foreground mt-1">
+                      {item.purchaseType === "DIGITAL" ? "Digital Copy" : "Original Copy"}
+                    </p>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -74,7 +77,7 @@ const Cart = () => {
                     </div>
                     <div className="flex items-center gap-4">
                       <span className="font-bold text-primary text-lg">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        ${(item.unitPrice * item.quantity).toFixed(2)}
                       </span>
                       <Button
                         variant="ghost"

@@ -25,18 +25,13 @@ const Checkout = () => {
     
     setTimeout(async () => {
       if (token) {
-        const digitalItems = items.filter(
-          (item) =>
-            item.comicType === "ONLY_DIGITAL" ||
-            item.comicType === "PHYSICAL_COPY" ||
-            !item.comicType
-        );
+        const digitalItems = items.filter((item) => item.purchaseType === "DIGITAL");
         await Promise.all(
           digitalItems.map((item) =>
             apiFetch("/api/library", {
               method: "POST",
               authToken: token,
-              body: JSON.stringify({ comicId: Number(item.id) }),
+              body: JSON.stringify({ comicId: Number(item.comicId) }),
             }).catch(() => null)
           )
         );
@@ -166,9 +161,11 @@ const Checkout = () => {
                     />
                     <div className="flex-1">
                       <h4 className="font-medium text-sm line-clamp-2">{item.title}</h4>
-                      <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.purchaseType === "DIGITAL" ? "Digital Copy" : "Original Copy"} · Qty: {item.quantity}
+                      </p>
                       <p className="text-sm font-bold text-primary">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        ${(item.unitPrice * item.quantity).toFixed(2)}
                       </p>
                     </div>
                   </div>

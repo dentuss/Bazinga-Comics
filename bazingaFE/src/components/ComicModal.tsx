@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart, Check, Heart } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface ComicModalProps {
@@ -33,23 +33,25 @@ const ComicModal = ({ isOpen, onClose, comic }: ComicModalProps) => {
   const [added, setAdded] = useState(false);
   const price = comic.price || 4.99;
   const subscriptionType = user?.subscriptionType?.toLowerCase();
-  const isPremium = subscriptionType === "premium";
   const isUnlimited = subscriptionType === "unlimited";
   const isDigitalExclusive = comic.comicType === "ONLY_DIGITAL";
-  const isDigitalRead =
-    comic.comicType === "ONLY_DIGITAL" || comic.comicType === "PHYSICAL_COPY" || !comic.comicType;
-  const isUnlimitedDigital = isUnlimited && isDigitalRead;
-  const discountedPrice = isUnlimitedDigital ? 0 : isPremium ? price * 0.5 : price;
+  const [purchaseType, setPurchaseType] = useState<"ORIGINAL" | "DIGITAL">(
+    isDigitalExclusive ? "DIGITAL" : "ORIGINAL"
+  );
   const comicId = comic.id.toString();
   const inWishlist = isInWishlist(comicId);
+  const originalPrice = isUnlimited ? price * 0.5 : price;
+  const digitalPrice = isUnlimited ? 0 : price * 0.75;
+  const selectedPrice = purchaseType === "DIGITAL" ? digitalPrice : originalPrice;
+
+  useEffect(() => {
+    setPurchaseType(isDigitalExclusive ? "DIGITAL" : "ORIGINAL");
+  }, [isDigitalExclusive, comic.id]);
 
   const handleAddToCart = () => {
     addToCart({
-      id: comicId,
-      title: comic.title,
-      image: comic.image,
-      creators: comic.creators,
-      price,
+      comicId,
+      purchaseType,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
@@ -89,16 +91,48 @@ const ComicModal = ({ isOpen, onClose, comic }: ComicModalProps) => {
                 <span className="text-xs font-semibold uppercase text-yellow-500">Digital Exclusive</span>
               )}
               <div className="flex flex-wrap items-baseline gap-3">
-                {isUnlimitedDigital ? (
+                {selectedPrice === 0 ? (
                   <span className="text-2xl font-bold text-primary">FREE WITH UNLIMITED</span>
                 ) : (
-                  <span className="text-3xl font-bold text-primary">${discountedPrice.toFixed(2)}</span>
+                  <span className="text-3xl font-bold text-primary">${selectedPrice.toFixed(2)}</span>
                 )}
-                {(isPremium || isUnlimitedDigital) && (
+                {selectedPrice !== price && (
                   <span className="text-sm text-muted-foreground line-through">${price.toFixed(2)}</span>
                 )}
               </div>
             </div>
+            {!isDigitalExclusive && (
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  className={`rounded-lg border px-3 py-2 text-left transition ${
+                    purchaseType === "ORIGINAL"
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:border-primary/60"
+                  }`}
+                  onClick={() => setPurchaseType("ORIGINAL")}
+                >
+                  <p className="text-sm font-semibold">Original Copy</p>
+                  <p className="text-xs text-muted-foreground">
+                    {originalPrice === 0 ? "FREE WITH UNLIMITED" : `$${originalPrice.toFixed(2)}`}
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  className={`rounded-lg border px-3 py-2 text-left transition ${
+                    purchaseType === "DIGITAL"
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:border-primary/60"
+                  }`}
+                  onClick={() => setPurchaseType("DIGITAL")}
+                >
+                  <p className="text-sm font-semibold">Digital Copy</p>
+                  <p className="text-xs text-muted-foreground">
+                    {digitalPrice === 0 ? "FREE WITH UNLIMITED" : `$${digitalPrice.toFixed(2)}`}
+                  </p>
+                </button>
+              </div>
+            )}
             <div>
               <h3 className="text-sm font-semibold text-muted-foreground mb-1">CREATORS</h3>
               <p className="text-lg">{comic.creators}</p>
@@ -130,7 +164,7 @@ const ComicModal = ({ isOpen, onClose, comic }: ComicModalProps) => {
                 ) : (
                   <>
                     <ShoppingCart className="h-4 w-4 mr-2" />
-                    {isUnlimitedDigital ? "ADD TO CART - FREE" : `ADD TO CART - $${discountedPrice.toFixed(2)}`}
+                    {selectedPrice === 0 ? "ADD TO CART - FREE" : `ADD TO CART - $${selectedPrice.toFixed(2)}`}
                   </>
                 )}
               </Button>

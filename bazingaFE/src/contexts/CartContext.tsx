@@ -4,15 +4,18 @@ import { useAuth } from "./AuthContext";
 
 export interface CartItem {
   id: string;
+  comicId: string;
   title: string;
   image: string;
   creators: string;
-  price: number;
+  unitPrice: number;
   quantity: number;
   comicType?: string;
+  purchaseType: "ORIGINAL" | "DIGITAL";
 }
 
 interface ApiCartItem {
+  id: number;
   comic: {
     id: number;
     title: string;
@@ -23,11 +26,13 @@ interface ApiCartItem {
   };
   comicId?: number;
   quantity: number;
+  purchaseType: "ORIGINAL" | "DIGITAL";
+  unitPrice: number;
 }
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (item: Omit<CartItem, "quantity">) => void;
+  addToCart: (item: { comicId: string; purchaseType: CartItem["purchaseType"] }) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -43,13 +48,15 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const mapApiItems = (response: ApiCartItem[]) =>
     response.map((item) => ({
-      id: item.comic.id?.toString() || String(item.comicId),
+      id: String(item.id),
+      comicId: item.comic.id?.toString() || String(item.comicId),
       title: item.comic.title,
       image: item.comic.image,
       creators: item.comic.author || "",
-      price: Number(item.comic.price),
+      unitPrice: Number(item.unitPrice),
       quantity: item.quantity,
       comicType: item.comic.comicType,
+      purchaseType: item.purchaseType,
     }));
 
   useEffect(() => {
@@ -65,12 +72,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     loadCart().catch(() => setItems([]));
   }, [token]);
 
-  const addToCart = (item: Omit<CartItem, "quantity">) => {
+  const addToCart = (item: { comicId: string; purchaseType: CartItem["purchaseType"] }) => {
     if (!token) return;
     apiFetch<ApiCartItem[]>("/api/cart", {
       method: "POST",
       authToken: token,
-      body: JSON.stringify({ comicId: Number(item.id), quantity: 1 }),
+      body: JSON.stringify({
+        comicId: Number(item.comicId),
+        quantity: 1,
+        purchaseType: item.purchaseType,
+      }),
     }).then((res) => {
       setItems(mapApiItems(res));
     });
@@ -95,7 +106,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     apiFetch<ApiCartItem[]>("/api/cart", {
       method: "PUT",
       authToken: token,
-      body: JSON.stringify({ comicId: Number(id), quantity }),
+      body: JSON.stringify({ cartItemId: Number(id), quantity }),
     }).then((res) => {
       setItems(mapApiItems(res));
     });
@@ -115,7 +126,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const totalPrice = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
 
   return (
     <CartContext.Provider
