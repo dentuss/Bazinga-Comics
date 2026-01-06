@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Zap } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const UnlimitedBanner = () => {
   return (
@@ -15,9 +16,11 @@ const UnlimitedBanner = () => {
               Want to read all these digital comics? Get instant access to all these and more!
             </p>
           </div>
-          <Button variant="hero" size="lg" className="whitespace-nowrap">
-            Join Now
-          </Button>
+          <Link to="/bazinga-unlimited">
+            <Button variant="hero" size="lg" className="whitespace-nowrap">
+              Join Now
+            </Button>
+          </Link>
         </div>
       </div>
     </section>

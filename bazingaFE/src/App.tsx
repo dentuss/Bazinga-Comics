@@ -15,6 +15,9 @@ import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
 import News from "./pages/News";
+import BazingaUnlimited from "./pages/BazingaUnlimited";
+import SubscriptionCheckout from "./pages/SubscriptionCheckout";
+import Library from "./pages/Library";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +39,9 @@ const App = () => (
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/news" element={<News />} />
+                <Route path="/bazinga-unlimited" element={<BazingaUnlimited />} />
+                <Route path="/subscription-checkout" element={<SubscriptionCheckout />} />
+                <Route path="/library" element={<Library />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

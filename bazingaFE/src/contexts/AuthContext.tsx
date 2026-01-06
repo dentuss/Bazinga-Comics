@@ -10,6 +10,8 @@ type AuthUser = {
   firstName?: string;
   lastName?: string;
   dateOfBirth?: string;
+  subscriptionType?: string;
+  subscriptionExpiration?: string;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -60,6 +62,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       firstName: payload.firstName,
       lastName: payload.lastName,
       dateOfBirth: payload.dateOfBirth,
+      subscriptionType: payload.subscriptionType,
+      subscriptionExpiration: payload.subscriptionExpiration,
       createdAt: payload.createdAt ?? now,
       updatedAt: payload.updatedAt ?? now,
     });

@@ -166,15 +166,11 @@ const Header = () => {
                 </NavigationMenuItem>
 
                 <NavigationMenuItem>
-                  <a href="#videos" className="text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors px-4 py-2">
-                    VIDEOS
-                  </a>
-                </NavigationMenuItem>
-
-                <NavigationMenuItem>
-                  <a href="#more" className="text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors px-4 py-2">
-                    MORE
-                  </a>
+                  <Link to="/library" className="px-4 py-2">
+                    <Button className="h-8 px-4 bg-orange-600 text-white hover:bg-orange-700">
+                      YOUR LIBRARY
+                    </Button>
+                  </Link>
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
