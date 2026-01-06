@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -45,7 +46,7 @@ const initialFormState = {
   categoryId: "",
   price: "",
   image: "",
-  comicType: "PHYSICAL_COPY",
+  isDigitalOnly: false,
 };
 
 const initialUserFormState = {
@@ -130,7 +131,7 @@ const Admin = () => {
           categoryId: formState.categoryId ? Number(formState.categoryId) : null,
           price: formState.price ? Number(formState.price) : null,
           image: formState.image || null,
-          comicType: formState.comicType,
+          comicType: formState.isDigitalOnly ? "ONLY_DIGITAL" : null,
         }),
       });
       toast({
@@ -410,19 +411,17 @@ const Admin = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="comicType">Comic type</Label>
-                    <Select
-                      value={formState.comicType}
-                      onValueChange={(value) => updateField("comicType", value)}
-                    >
-                      <SelectTrigger id="comicType">
-                        <SelectValue placeholder="Select comic type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="PHYSICAL_COPY">Physical Copy</SelectItem>
-                        <SelectItem value="ONLY_DIGITAL">Only Digital</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="digitalOnly">Digital only</Label>
+                    <div className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
+                      <Switch
+                        id="digitalOnly"
+                        checked={formState.isDigitalOnly}
+                        onCheckedChange={(checked) => setFormState((prev) => ({ ...prev, isDigitalOnly: checked }))}
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Enable to list this comic as a digital-only release.
+                      </p>
+                    </div>
                   </div>
                 </div>
 

@@ -9,6 +9,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import java.math.BigDecimal;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
@@ -32,6 +35,13 @@ public class CartItem {
 
     @Column(nullable = false)
     private Integer quantity;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "purchase_type", nullable = false)
+    private PurchaseType purchaseType = PurchaseType.ORIGINAL;
+
+    @Column(name = "unit_price", nullable = false)
+    private BigDecimal unitPrice = BigDecimal.ZERO;
 
     public Long getId() {
         return id;
@@ -63,5 +73,21 @@ public class CartItem {
 
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
+    }
+
+    public PurchaseType getPurchaseType() {
+        return purchaseType;
+    }
+
+    public void setPurchaseType(PurchaseType purchaseType) {
+        this.purchaseType = purchaseType;
+    }
+
+    public BigDecimal getUnitPrice() {
+        return unitPrice;
+    }
+
+    public void setUnitPrice(BigDecimal unitPrice) {
+        this.unitPrice = unitPrice;
     }
 }

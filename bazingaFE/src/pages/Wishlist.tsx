@@ -12,11 +12,8 @@ const Wishlist = () => {
 
   const handleMoveToCart = (item: typeof items[0]) => {
     addToCart({
-      id: item.id,
-      title: item.title,
-      image: item.image,
-      creators: item.creators,
-      price: item.price,
+      comicId: item.id,
+      purchaseType: "ORIGINAL",
     });
     removeFromWishlist(item.id);
   };
