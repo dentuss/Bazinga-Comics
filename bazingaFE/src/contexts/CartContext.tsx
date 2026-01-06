@@ -35,7 +35,7 @@ interface CartContextType {
   addToCart: (item: { comicId: string; purchaseType: CartItem["purchaseType"] }) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
-  clearCart: () => void;
+  clearCart: () => Promise<void>;
   totalItems: number;
   totalPrice: number;
 }
@@ -112,17 +112,20 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const clearCart = () => {
+  const clearCart = async () => {
     if (!token) {
       setItems([]);
       return;
     }
-    apiFetch<ApiCartItem[]>("/api/cart", {
-      method: "DELETE",
-      authToken: token,
-    }).then((res) => {
+    try {
+      const res = await apiFetch<ApiCartItem[]>("/api/cart", {
+        method: "DELETE",
+        authToken: token,
+      });
       setItems(mapApiItems(res));
-    });
+    } catch {
+      setItems([]);
+    }
   };
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
