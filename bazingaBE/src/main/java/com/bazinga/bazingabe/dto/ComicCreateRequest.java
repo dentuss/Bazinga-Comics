@@ -9,6 +9,7 @@ public class ComicCreateRequest {
     private String isbn;
     private String description;
     private String mainCharacter;
+    private String series;
     private Integer publishedYear;
     private Long conditionId;
     private Long categoryId;
@@ -54,6 +55,14 @@ public class ComicCreateRequest {
 
     public void setMainCharacter(String mainCharacter) {
         this.mainCharacter = mainCharacter;
+    }
+
+    public String getSeries() {
+        return series;
+    }
+
+    public void setSeries(String series) {
+        this.series = series;
     }
 
     public Integer getPublishedYear() {

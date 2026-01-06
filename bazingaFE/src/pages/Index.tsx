@@ -18,6 +18,7 @@ export interface ComicDto {
   author?: string;
   description?: string;
   mainCharacter?: string;
+  series?: string;
   image: string;
   price: number;
   category?: { name: string };
@@ -57,7 +58,7 @@ const Index = () => {
   const allComics = comics.map((comic) => ({
     ...comic,
     creators: comic.author || "",
-    series: comic.category?.name || "",
+    series: comic.series || "",
     character: comic.mainCharacter || "",
     comicType: comic.comicType || "PHYSICAL_COPY",
   }));

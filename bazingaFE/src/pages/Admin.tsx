@@ -42,6 +42,7 @@ const initialFormState = {
   isbn: "",
   description: "",
   mainCharacter: "",
+  series: "",
   publishedYear: "",
   conditionId: "",
   categoryId: "",
@@ -122,11 +123,12 @@ const Admin = () => {
       await apiFetch("/api/comics", {
         method: "POST",
         authToken: token,
-        body: JSON.stringify({
+          body: JSON.stringify({
           title: formState.title,
           author: formState.author || null,
           isbn: formState.isbn || null,
           description: formState.description || null,
+          series: formState.series || null,
           publishedYear: formState.publishedYear ? Number(formState.publishedYear) : null,
           conditionId: formState.conditionId ? Number(formState.conditionId) : null,
           categoryId: formState.categoryId ? Number(formState.categoryId) : null,
@@ -324,6 +326,25 @@ const Admin = () => {
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="series">Series</Label>
+                    <Input
+                      id="series"
+                      placeholder="Spider-Man"
+                      value={formState.series}
+                      onChange={(event) => updateField("series", event.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="mainCharacter">Main character</Label>
+                    <Input
+                      id="mainCharacter"
+                      placeholder="Peter Parker"
+                      value={formState.mainCharacter}
+                      onChange={(event) => updateField("mainCharacter", event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="isbn">ISBN</Label>
                     <Input
                       id="isbn"
@@ -473,15 +494,6 @@ const Admin = () => {
                       value={userFormState.username}
                       onChange={(event) => updateUserField("username", event.target.value)}
                       required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="mainCharacter">Main character</Label>
-                    <Input
-                      id="mainCharacter"
-                      placeholder="Spider-Man"
-                      value={formState.mainCharacter}
-                      onChange={(event) => updateField("mainCharacter", event.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
