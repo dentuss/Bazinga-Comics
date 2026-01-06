@@ -17,6 +17,7 @@ export interface ComicDto {
   title: string;
   author?: string;
   description?: string;
+  mainCharacter?: string;
   image: string;
   price: number;
   category?: { name: string };
@@ -56,10 +57,22 @@ const Index = () => {
   const allComics = comics.map((comic) => ({
     ...comic,
     creators: comic.author || "",
-    series: comic.category?.name || "Series",
-    character: comic.author?.split(",")[0] || "",
+    series: comic.category?.name || "",
+    character: comic.mainCharacter || "",
     comicType: comic.comicType || "PHYSICAL_COPY",
   }));
+
+  const browseOptions = useMemo(() => {
+    const toSortedList = (values: string[]) =>
+      Array.from(new Set(values.filter((value) => value.trim().length > 0))).sort((a, b) =>
+        a.localeCompare(b, undefined, { sensitivity: "base" })
+      );
+    return {
+      series: ["All Series", ...toSortedList(allComics.map((comic) => comic.series))],
+      character: ["All Characters", ...toSortedList(allComics.map((comic) => comic.character))],
+      creator: ["All Creators", ...toSortedList(allComics.map((comic) => comic.creators))],
+    };
+  }, [allComics]);
 
   const digitalReadComics = allComics.filter(
     (comic) => comic.comicType === "ONLY_DIGITAL" || comic.comicType === "PHYSICAL_COPY"
@@ -85,8 +98,8 @@ const Index = () => {
       } else if (browseFilter.type === "character") {
         comics = comics.filter((comic) => comic.character === browseFilter.value);
       } else if (browseFilter.type === "creator") {
-        comics = comics.filter((comic) =>
-          comic.creators.toLowerCase().includes(browseFilter.value.split(" ").pop()?.toLowerCase() || "")
+        comics = comics.filter(
+          (comic) => comic.creators.toLowerCase() === browseFilter.value.toLowerCase()
         );
       }
     }
@@ -106,7 +119,12 @@ const Index = () => {
       <FilterBar />
       <main>
         <HeroCarousel />
-        <BrowseByFilter onFilterChange={handleBrowseFilterChange} />
+        <BrowseByFilter
+          onFilterChange={handleBrowseFilterChange}
+          seriesOptions={browseOptions.series}
+          characterOptions={browseOptions.character}
+          creatorOptions={browseOptions.creator}
+        />
         
         {isFiltered ? (
           <section className="container mx-auto px-4 py-8">

@@ -18,6 +18,8 @@ import News from "./pages/News";
 import BazingaUnlimited from "./pages/BazingaUnlimited";
 import SubscriptionCheckout from "./pages/SubscriptionCheckout";
 import Library from "./pages/Library";
+import ComicReader from "./pages/ComicReader";
+import UnderConstruction from "./pages/UnderConstruction";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +44,8 @@ const App = () => (
                 <Route path="/bazinga-unlimited" element={<BazingaUnlimited />} />
                 <Route path="/subscription-checkout" element={<SubscriptionCheckout />} />
                 <Route path="/library" element={<Library />} />
+                <Route path="/read/:id" element={<ComicReader />} />
+                <Route path="/under-construction" element={<UnderConstruction />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

@@ -41,6 +41,7 @@ const initialFormState = {
   author: "",
   isbn: "",
   description: "",
+  mainCharacter: "",
   publishedYear: "",
   conditionId: "",
   categoryId: "",
@@ -131,6 +132,7 @@ const Admin = () => {
           categoryId: formState.categoryId ? Number(formState.categoryId) : null,
           price: formState.price ? Number(formState.price) : null,
           image: formState.image || null,
+          mainCharacter: formState.mainCharacter || null,
           comicType: formState.isDigitalOnly ? "ONLY_DIGITAL" : null,
         }),
       });
@@ -425,10 +427,10 @@ const Admin = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
                     placeholder="Short description for the storefront..."
                     rows={5}
                     value={formState.description}
@@ -471,6 +473,15 @@ const Admin = () => {
                       value={userFormState.username}
                       onChange={(event) => updateUserField("username", event.target.value)}
                       required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="mainCharacter">Main character</Label>
+                    <Input
+                      id="mainCharacter"
+                      placeholder="Spider-Man"
+                      value={formState.mainCharacter}
+                      onChange={(event) => updateField("mainCharacter", event.target.value)}
                     />
                   </div>
                   <div className="space-y-2">

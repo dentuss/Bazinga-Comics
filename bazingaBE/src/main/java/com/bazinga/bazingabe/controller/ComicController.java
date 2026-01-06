@@ -47,6 +47,7 @@ public class ComicController {
             comic.setAuthor(request.getAuthor());
             comic.setIsbn(request.getIsbn());
             comic.setDescription(request.getDescription());
+            comic.setMainCharacter(request.getMainCharacter());
             comic.setPublishedYear(request.getPublishedYear());
             comic.setPrice(request.getPrice());
             comic.setImage(request.getImage());

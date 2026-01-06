@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import heroBanner1 from "@/assets/hero-banner-1.jpg";
 import heroBanner2 from "@/assets/hero-banner-2.jpg";
 import heroBanner3 from "@/assets/hero-banner-3.jpg";
@@ -60,9 +61,11 @@ const HeroCarousel = () => {
                 <p className="text-lg md:text-xl text-muted-foreground">
                   {slide.description}
                 </p>
-                <Button variant="hero" size="lg">
-                  READ MORE
-                </Button>
+                <Link to="/news">
+                  <Button variant="hero" size="lg">
+                    READ MORE
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
