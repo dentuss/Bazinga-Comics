@@ -123,6 +123,27 @@ CREATE TABLE reports (
     CONSTRAINT fk_reports_category FOREIGN KEY (report_category_id) REFERENCES report_categories(id)
 );
 
+CREATE TABLE library_items (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    library_id BIGINT NOT NULL,
+    comic_id BIGINT NOT NULL,
+    added_at TIMESTAMP NOT NULL,
+    CONSTRAINT fk_library_items_library FOREIGN KEY (library_id) REFERENCES libraries(id),
+    CONSTRAINT fk_library_items_comic FOREIGN KEY (comic_id) REFERENCES comics(id),
+    CONSTRAINT uk_library_items_library_comic UNIQUE (library_id, comic_id)
+);
+
+CREATE TABLE libraries (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    CONSTRAINT fk_libraries_user FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT uk_libraries_user UNIQUE (user_id)
+);
+
+ALTER TABLE comics
+    ADD COLUMN comic_type ENUM('ONLY_DIGITAL','PHYSICAL_COPY') NOT NULL;
+
 CREATE INDEX idx_comics_category ON comics(category_id);
 CREATE INDEX idx_comics_condition ON comics(condition_id);
 CREATE INDEX idx_cart_items_cart ON cart_items(cart_id);
@@ -135,3 +156,4 @@ CREATE INDEX idx_reviews_comic ON reviews(comic_id);
 CREATE INDEX idx_reports_user ON reports(user_id);
 CREATE INDEX idx_reports_comic ON reports(comic_id);
 CREATE INDEX idx_reports_category ON reports(report_category_id);
+CREATE INDEX idx_library_items_comic ON library_items(comic_id);
