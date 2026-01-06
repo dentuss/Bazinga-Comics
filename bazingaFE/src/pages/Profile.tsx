@@ -147,6 +147,13 @@ const Profile = () => {
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Signed in as</p>
                   <p className="text-base text-foreground">{user.email}</p>
                 </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Subscription type</p>
+                  <p className="text-base text-foreground">{user.subscriptionType ?? "Free"}</p>
+                  {user.subscriptionExpiration ? (
+                    <p className="text-xs text-muted-foreground mt-1">Renews on {user.subscriptionExpiration}</p>
+                  ) : null}
+                </div>
               </div>
               <Button variant="outline" onClick={handleReset}>
                 Reset changes

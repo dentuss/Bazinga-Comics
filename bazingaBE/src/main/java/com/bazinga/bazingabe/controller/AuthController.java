@@ -42,9 +42,17 @@ public class AuthController {
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole("USER");
+        user.setSubscriptionType("Free");
         userRepository.save(user);
         String token = jwtService.generateToken(user.getEmail());
-        return ResponseEntity.ok(new AuthResponse(token, user.getId(), user.getUsername(), user.getEmail(), user.getRole()));
+        return ResponseEntity.ok(new AuthResponse(
+                token,
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole(),
+                user.getSubscriptionType(),
+                user.getSubscriptionExpiration() != null ? user.getSubscriptionExpiration().toString() : null));
     }
 
     @PostMapping("/login")
@@ -53,6 +61,13 @@ public class AuthController {
                 .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
         String token = jwtService.generateToken(user.getEmail());
-        return ResponseEntity.ok(new AuthResponse(token, user.getId(), user.getUsername(), user.getEmail(), user.getRole()));
+        return ResponseEntity.ok(new AuthResponse(
+                token,
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole(),
+                user.getSubscriptionType(),
+                user.getSubscriptionExpiration() != null ? user.getSubscriptionExpiration().toString() : null));
     }
 }

@@ -40,6 +40,12 @@ public class User {
     @Column(length = 50)
     private String role;
 
+    @Column(name = "subscription_type", length = 20)
+    private String subscriptionType;
+
+    @Column(name = "subscription_expiration")
+    private LocalDate subscriptionExpiration;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -51,6 +57,9 @@ public class User {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
+        if (this.subscriptionType == null || this.subscriptionType.isBlank()) {
+            this.subscriptionType = "Free";
+        }
     }
 
     @PreUpdate
@@ -120,6 +129,22 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getSubscriptionType() {
+        return subscriptionType;
+    }
+
+    public void setSubscriptionType(String subscriptionType) {
+        this.subscriptionType = subscriptionType;
+    }
+
+    public LocalDate getSubscriptionExpiration() {
+        return subscriptionExpiration;
+    }
+
+    public void setSubscriptionExpiration(LocalDate subscriptionExpiration) {
+        this.subscriptionExpiration = subscriptionExpiration;
     }
 
     public LocalDateTime getCreatedAt() {

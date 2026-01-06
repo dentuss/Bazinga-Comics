@@ -67,6 +67,7 @@ public class AdminUserController {
         user.setLastName(request.getLastName());
         user.setDateOfBirth(request.getDateOfBirth());
         user.setRole(normalizeRole(request.getRole()));
+        user.setSubscriptionType("Free");
         User saved = userRepository.save(user);
         return ResponseEntity.ok(toResponse(saved));
     }
