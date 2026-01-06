@@ -4,6 +4,7 @@ import com.bazinga.bazingabe.dto.ComicCreateRequest;
 import com.bazinga.bazingabe.entity.Category;
 import com.bazinga.bazingabe.entity.Comic;
 import com.bazinga.bazingabe.entity.ComicCondition;
+import com.bazinga.bazingabe.entity.ComicType;
 import com.bazinga.bazingabe.repository.CategoryRepository;
 import com.bazinga.bazingabe.repository.ComicConditionRepository;
 import com.bazinga.bazingabe.repository.ComicRepository;
@@ -49,6 +50,7 @@ public class ComicController {
             comic.setPublishedYear(request.getPublishedYear());
             comic.setPrice(request.getPrice());
             comic.setImage(request.getImage());
+            comic.setComicType(ComicType.fromValue(request.getComicType()));
 
             if (request.getCategoryId() != null) {
                 Category category = categoryRepository.findById(request.getCategoryId()).orElseThrow();

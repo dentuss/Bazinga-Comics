@@ -9,6 +9,7 @@ export interface CartItem {
   creators: string;
   price: number;
   quantity: number;
+  comicType?: string;
 }
 
 interface ApiCartItem {
@@ -18,6 +19,7 @@ interface ApiCartItem {
     image: string;
     author?: string;
     price: number;
+    comicType?: string;
   };
   comicId?: number;
   quantity: number;
@@ -47,6 +49,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       creators: item.comic.author || "",
       price: Number(item.comic.price),
       quantity: item.quantity,
+      comicType: item.comic.comicType,
     }));
 
   useEffect(() => {

@@ -13,6 +13,7 @@ public class ComicCreateRequest {
     private Long categoryId;
     private BigDecimal price;
     private String image;
+    private String comicType;
 
     public String getTitle() {
         return title;
@@ -84,5 +85,13 @@ public class ComicCreateRequest {
 
     public void setImage(String image) {
         this.image = image;
+    }
+
+    public String getComicType() {
+        return comicType;
+    }
+
+    public void setComicType(String comicType) {
+        this.comicType = comicType;
     }
 }

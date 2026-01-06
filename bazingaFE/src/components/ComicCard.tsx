@@ -1,19 +1,24 @@
-import { Star } from "lucide-react";
-
 interface ComicCardProps {
   image: string;
   title: string;
   creators?: string;
-  rating?: number;
+  comicType?: string;
   onClick?: () => void;
 }
 
-const ComicCard = ({ image, title, creators, rating, onClick }: ComicCardProps) => {
+const ComicCard = ({ image, title, creators, comicType, onClick }: ComicCardProps) => {
+  const isDigitalExclusive = comicType === "ONLY_DIGITAL";
+
   return (
     <div 
       onClick={onClick}
       className="group relative overflow-hidden rounded-sm bg-card transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-primary/20 cursor-pointer"
     >
+      {isDigitalExclusive && (
+        <span className="absolute left-2 top-2 z-10 rounded-full bg-yellow-400 px-2 py-1 text-[10px] font-bold uppercase text-black shadow">
+          Digital Exclusive
+        </span>
+      )}
       <div className="aspect-[2/3] overflow-hidden">
         <img
           src={image}
@@ -27,12 +32,6 @@ const ComicCard = ({ image, title, creators, rating, onClick }: ComicCardProps) 
         </h3>
         {creators && (
           <p className="text-xs text-muted-foreground line-clamp-1">{creators}</p>
-        )}
-        {rating && (
-          <div className="flex items-center gap-1">
-            <Star className="h-3 w-3 fill-primary text-primary" />
-            <span className="text-xs font-medium">{rating}</span>
-          </div>
         )}
       </div>
     </div>
