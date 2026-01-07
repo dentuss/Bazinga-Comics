@@ -109,7 +109,7 @@ const Index = () => {
   const isFiltered = searchQuery || browseFilter.value || viewAll || viewDigital;
 
   const newThisWeek = allComics.slice(0, 12);
-  const digitalRead = digitalExclusiveComics.slice(4, 10);
+  const digitalRead = digitalExclusiveComics.slice(0, 10);
 
   return (
     <div className="min-h-screen bg-background">
