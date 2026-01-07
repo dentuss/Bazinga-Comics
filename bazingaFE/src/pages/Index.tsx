@@ -6,7 +6,6 @@ import HeroCarousel from "@/components/HeroCarousel";
 import ComicSection from "@/components/ComicSection";
 import UnlimitedBanner from "@/components/UnlimitedBanner";
 import Footer from "@/components/Footer";
-import FilterBar from "@/components/FilterBar";
 import BrowseByFilter from "@/components/BrowseByFilter";
 import ComicModal from "@/components/ComicModal";
 import { Button } from "@/components/ui/button";
@@ -113,12 +112,10 @@ const Index = () => {
 
   const newThisWeek = allComics.slice(0, 12);
   const digitalRead = digitalReadComics.slice(4, 10);
-  const readForFree = allComics.slice(10, 16);
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <FilterBar />
       <main>
         <HeroCarousel />
         <BrowseByFilter
@@ -197,12 +194,6 @@ const Index = () => {
               onComicClick={handleComicClick}
             />
             <UnlimitedBanner />
-            <ComicSection 
-              id="read-for-free" 
-              title="READ FOR FREE" 
-              comics={readForFree}
-              onComicClick={handleComicClick}
-            />
           </>
         )}
       </main>
