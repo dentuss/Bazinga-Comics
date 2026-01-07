@@ -8,6 +8,10 @@ const UnlimitedBanner = () => {
   const subscriptionType = user?.subscriptionType?.toLowerCase();
   const isUnlimited = subscriptionType === "unlimited";
 
+  if (isUnlimited) {
+    return null;
+  }
+
   return (
     <section id="unlimited" className="py-8 border-y border-border bg-secondary/30">
       <div className="container mx-auto px-4">
