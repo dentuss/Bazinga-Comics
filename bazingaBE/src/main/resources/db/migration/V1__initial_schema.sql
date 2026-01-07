@@ -156,6 +156,9 @@ ALTER TABLE cart_items
 DROP INDEX uk_cart_items_cart_comic,
     ADD CONSTRAINT uk_cart_items_cart_comic_type UNIQUE (cart_id, comic_id, purchase_type);
 
+ALTER TABLE comics
+    ADD COLUMN redacted BOOLEAN NOT NULL DEFAULT FALSE;
+
 CREATE INDEX idx_comics_category ON comics(category_id);
 CREATE INDEX idx_comics_condition ON comics(condition_id);
 CREATE INDEX idx_cart_items_cart ON cart_items(cart_id);
