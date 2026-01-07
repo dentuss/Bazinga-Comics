@@ -21,6 +21,7 @@ const Header = () => {
   const { user } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   const comicsSubmenu = [
@@ -34,6 +35,15 @@ const Header = () => {
   const moviesSubmenu = ["Latest Releases", "Upcoming", "Box Office", "News"];
   const tvShowsSubmenu = ["Streaming Now", "Upcoming Series", "Episode Guides"];
   const gamesSubmenu = ["Video Games", "Mobile Games", "Board Games"];
+  const mobileNavItems = [
+    { label: "NEWS", to: "/news" },
+    { label: "COMICS", to: "/?view=all" },
+    { label: "CHARACTERS", to: "/#characters" },
+    { label: "MOVIES", to: "/#movies" },
+    { label: "TV SHOWS", to: "/#tv-shows" },
+    { label: "GAMES", to: "/#games" },
+    { label: "YOUR LIBRARY", to: "/library" },
+  ];
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -260,12 +270,70 @@ const Header = () => {
                 </Button>
               </Link>
             )}
-            <Button variant="ghost" size="icon" className="lg:hidden">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open menu"
+            >
               <Menu className="h-5 w-5" />
             </Button>
           </div>
         </div>
       </div>
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-[60] lg:hidden">
+          <div
+            className="absolute inset-0 bg-black/70"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <div className="absolute right-0 top-0 h-screen max-h-screen min-h-[100dvh] w-[85%] max-w-xs bg-background shadow-xl flex flex-col min-h-0">
+            <div className="flex items-center justify-between border-b border-border px-4 py-4">
+              <span className="text-lg font-bold">Menu</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setMobileMenuOpen(false)}
+                aria-label="Close menu"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-4">
+              <ul className="space-y-2">
+                {mobileNavItems.map((item) => (
+                  <li key={item.label}>
+                    <Link
+                      to={item.to}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-semibold text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              {!user ? (
+                <div className="mt-6 flex flex-col gap-3">
+                  <Link to="/auth?mode=signin" onClick={() => setMobileMenuOpen(false)}>
+                    <Button className="w-full">Sign In</Button>
+                  </Link>
+                  <Link to="/auth?mode=signup" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="outline" className="w-full">Register</Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="mt-6 flex flex-col gap-3">
+                  <Link to="/profile" onClick={() => setMobileMenuOpen(false)}>
+                    <Button className="w-full">Profile</Button>
+                  </Link>
+                </div>
+              )}
+            </nav>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

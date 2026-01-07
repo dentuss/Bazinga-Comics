@@ -34,6 +34,7 @@ const ComicModal = ({ isOpen, onClose, comic }: ComicModalProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [added, setAdded] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const price = comic.price || 4.99;
   const subscriptionType = user?.subscriptionType?.toLowerCase();
   const isUnlimited = subscriptionType === "unlimited";
@@ -49,6 +50,7 @@ const ComicModal = ({ isOpen, onClose, comic }: ComicModalProps) => {
 
   useEffect(() => {
     setPurchaseType(isDigitalExclusive ? "DIGITAL" : "ORIGINAL");
+    setIsDescriptionExpanded(false);
   }, [isDigitalExclusive, comic.id]);
 
   const handleAddToCart = () => {
@@ -80,83 +82,101 @@ const ComicModal = ({ isOpen, onClose, comic }: ComicModalProps) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">{comic.title}</DialogTitle>
-        </DialogHeader>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <img
-              src={resolveImageUrl(comic.image)}
-              alt={comic.title}
-              className="w-full rounded-lg shadow-lg"
-            />
-          </div>
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              {isDigitalExclusive && (
-                <span className="text-xs font-semibold uppercase text-yellow-500">Digital Exclusive</span>
-              )}
-              <div className="flex flex-wrap items-baseline gap-3">
-                {selectedPrice === 0 ? (
-                  <span className="text-2xl font-bold text-primary">FREE WITH UNLIMITED</span>
-                ) : (
-                  <span className="text-3xl font-bold text-primary">${selectedPrice.toFixed(2)}</span>
-                )}
-                {selectedPrice !== price && (
-                  <span className="text-sm text-muted-foreground line-through">${price.toFixed(2)}</span>
-                )}
-              </div>
-            </div>
-            {!isDigitalExclusive && (
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  className={`rounded-lg border px-3 py-2 text-left transition ${
-                    purchaseType === "ORIGINAL"
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/60"
-                  }`}
-                  onClick={() => setPurchaseType("ORIGINAL")}
-                >
-                  <p className="text-sm font-semibold">Original Copy</p>
-                  <p className="text-xs text-muted-foreground">
-                    {originalPrice === 0 ? "FREE WITH UNLIMITED" : `$${originalPrice.toFixed(2)}`}
-                  </p>
-                </button>
-                <button
-                  type="button"
-                  className={`rounded-lg border px-3 py-2 text-left transition ${
-                    purchaseType === "DIGITAL"
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/60"
-                  }`}
-                  onClick={() => setPurchaseType("DIGITAL")}
-                >
-                  <p className="text-sm font-semibold">Digital Copy</p>
-                  <p className="text-xs text-muted-foreground">
-                    {digitalPrice === 0 ? "FREE WITH UNLIMITED" : `$${digitalPrice.toFixed(2)}`}
-                  </p>
-                </button>
-              </div>
-            )}
-            <div>
-              <h3 className="text-sm font-semibold text-muted-foreground mb-1">CREATORS</h3>
-              <p className="text-lg">{comic.creators}</p>
-            </div>
-            {comic.year && (
+      <DialogContent className="max-w-2xl w-[calc(100%-1.5rem)] sm:w-full max-h-[90vh] p-0 overflow-hidden">
+        <div className="flex max-h-[90vh] flex-col">
+          <DialogHeader className="px-6 pt-6">
+            <DialogTitle className="text-2xl font-bold">{comic.title}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto px-6 pb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h3 className="text-sm font-semibold text-muted-foreground mb-1">YEAR</h3>
-                <p className="text-lg">{comic.year}</p>
+                <img
+                  src={resolveImageUrl(comic.image)}
+                  alt={comic.title}
+                  className="w-full rounded-lg shadow-lg"
+                />
               </div>
-            )}
-            <div>
-              <h3 className="text-sm font-semibold text-muted-foreground mb-1">DESCRIPTION</h3>
-              <p className="text-sm leading-relaxed">
-                {comic.description || "An epic adventure awaits in this thrilling comic series. Join your favorite heroes as they battle against the forces of evil and protect the universe from destruction."}
-              </p>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
+                  {isDigitalExclusive && (
+                    <span className="text-xs font-semibold uppercase text-yellow-500">Digital Exclusive</span>
+                  )}
+                  <div className="flex flex-wrap items-baseline gap-3">
+                    {selectedPrice === 0 ? (
+                      <span className="text-2xl font-bold text-primary">FREE WITH UNLIMITED</span>
+                    ) : (
+                      <span className="text-3xl font-bold text-primary">${selectedPrice.toFixed(2)}</span>
+                    )}
+                    {selectedPrice !== price && (
+                      <span className="text-sm text-muted-foreground line-through">${price.toFixed(2)}</span>
+                    )}
+                  </div>
+                </div>
+                {!isDigitalExclusive && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      className={`rounded-lg border px-3 py-2 text-left transition ${
+                        purchaseType === "ORIGINAL"
+                          ? "border-primary bg-primary/10"
+                          : "border-border hover:border-primary/60"
+                      }`}
+                      onClick={() => setPurchaseType("ORIGINAL")}
+                    >
+                      <p className="text-sm font-semibold">Original Copy</p>
+                      <p className="text-xs text-muted-foreground">
+                        {originalPrice === 0 ? "FREE WITH UNLIMITED" : `$${originalPrice.toFixed(2)}`}
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      className={`rounded-lg border px-3 py-2 text-left transition ${
+                        purchaseType === "DIGITAL"
+                          ? "border-primary bg-primary/10"
+                          : "border-border hover:border-primary/60"
+                      }`}
+                      onClick={() => setPurchaseType("DIGITAL")}
+                    >
+                      <p className="text-sm font-semibold">Digital Copy</p>
+                      <p className="text-xs text-muted-foreground">
+                        {digitalPrice === 0 ? "FREE WITH UNLIMITED" : `$${digitalPrice.toFixed(2)}`}
+                      </p>
+                    </button>
+                  </div>
+                )}
+                <div>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-1">CREATORS</h3>
+                  <p className="text-lg">{comic.creators}</p>
+                </div>
+                {comic.year && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-1">YEAR</h3>
+                    <p className="text-lg">{comic.year}</p>
+                  </div>
+                )}
+                <div>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-1">DESCRIPTION</h3>
+                  <p
+                    className={`text-sm leading-relaxed transition-all ${
+                      isDescriptionExpanded ? "max-h-none" : "max-h-24 overflow-hidden"
+                    }`}
+                  >
+                    {comic.description ||
+                      "An epic adventure awaits in this thrilling comic series. Join your favorite heroes as they battle against the forces of evil and protect the universe from destruction."}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setIsDescriptionExpanded((prev) => !prev)}
+                    className="mt-2 text-xs font-semibold text-primary hover:text-primary/80"
+                  >
+                    {isDescriptionExpanded ? "Show less" : "Read more"}
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col gap-2 mt-4">
+          </div>
+          <div className="border-t border-border bg-background/95 px-6 py-4">
+            <div className="flex flex-col gap-2">
               {user ? (
                 <Button
                   variant="default"
