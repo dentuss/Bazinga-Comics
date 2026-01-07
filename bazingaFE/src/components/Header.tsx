@@ -288,7 +288,7 @@ const Header = () => {
             className="absolute inset-0 bg-black/70"
             onClick={() => setMobileMenuOpen(false)}
           />
-          <div className="absolute right-0 top-0 h-[100dvh] w-[85%] max-w-xs bg-background shadow-xl flex flex-col min-h-0">
+          <div className="absolute right-0 top-0 h-full w-[85%] max-w-xs bg-background shadow-xl flex flex-col">
             <div className="flex items-center justify-between border-b border-border px-4 py-4">
               <span className="text-lg font-bold">Menu</span>
               <Button
@@ -300,7 +300,7 @@ const Header = () => {
                 <X className="h-5 w-5" />
               </Button>
             </div>
-            <nav className="flex-1 min-h-0 overflow-y-auto px-4 py-4">
+            <nav className="flex-1 overflow-y-auto px-4 py-4">
               <ul className="space-y-2">
                 {mobileNavItems.map((item) => (
                   <li key={item.label}>
