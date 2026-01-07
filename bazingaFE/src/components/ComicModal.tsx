@@ -9,6 +9,7 @@ import { ShoppingCart, Check, Heart } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { resolveImageUrl } from "@/lib/images";
 
@@ -31,6 +32,7 @@ const ComicModal = ({ isOpen, onClose, comic }: ComicModalProps) => {
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [added, setAdded] = useState(false);
   const price = comic.price || 4.99;
   const subscriptionType = user?.subscriptionType?.toLowerCase();
@@ -70,6 +72,10 @@ const ComicModal = ({ isOpen, onClose, comic }: ComicModalProps) => {
         price,
       });
     }
+  };
+
+  const handleSignInRedirect = () => {
+    navigate("/auth");
   };
 
   return (
@@ -151,34 +157,42 @@ const ComicModal = ({ isOpen, onClose, comic }: ComicModalProps) => {
               </p>
             </div>
             <div className="flex flex-col gap-2 mt-4">
-              <Button 
-                variant="default" 
-                className="w-full"
-                onClick={handleAddToCart}
-                disabled={added}
-              >
-                {added ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    ADDED TO CART
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    {selectedPrice === 0 ? "ADD TO CART - FREE" : `ADD TO CART - $${selectedPrice.toFixed(2)}`}
-                  </>
-                )}
-              </Button>
-              <Button 
-                variant={inWishlist ? "secondary" : "outline"} 
-                className="w-full"
-                onClick={handleWishlistToggle}
-              >
-                <Heart className={`h-4 w-4 mr-2 ${inWishlist ? 'fill-current' : ''}`} />
-                {inWishlist ? 'IN WISHLIST' : 'ADD TO WISHLIST'}
-              </Button>
+              {user ? (
+                <Button
+                  variant="default"
+                  className="w-full"
+                  onClick={handleAddToCart}
+                  disabled={added}
+                >
+                  {added ? (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      ADDED TO CART
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      {selectedPrice === 0 ? "ADD TO CART - FREE" : `ADD TO CART - $${selectedPrice.toFixed(2)}`}
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button variant="default" className="w-full" onClick={handleSignInRedirect}>
+                  SIGN IN TO BUY
+                </Button>
+              )}
+              {user && (
+                <Button
+                  variant={inWishlist ? "secondary" : "outline"}
+                  className="w-full"
+                  onClick={handleWishlistToggle}
+                >
+                  <Heart className={`h-4 w-4 mr-2 ${inWishlist ? "fill-current" : ""}`} />
+                  {inWishlist ? "IN WISHLIST" : "ADD TO WISHLIST"}
+                </Button>
+              )}
               <Button variant="ghost" className="w-full" onClick={onClose}>
-                CONTINUE SHOPPING
+                BACK TO CATALOG
               </Button>
             </div>
           </div>
