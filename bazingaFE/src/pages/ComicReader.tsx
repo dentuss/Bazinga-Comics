@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
+import { resolveImageUrl } from "@/lib/images";
 
 interface ComicDto {
   id: number;
@@ -119,7 +120,7 @@ const ComicReader = () => {
                 <div className="rounded-2xl border-[6px] border-foreground bg-white text-black p-4 shadow-[6px_6px_0_0_rgba(0,0,0,0.35)]">
                   <p className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">Cover art</p>
                   <img
-                    src={comic.image}
+                    src={resolveImageUrl(comic.image)}
                     alt={comic.title}
                     className="mt-3 w-full rounded-lg border-4 border-foreground object-cover"
                   />

@@ -4,6 +4,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { Link } from "react-router-dom";
+import { resolveImageUrl } from "@/lib/images";
 
 const Cart = () => {
   const { items, removeFromCart, updateQuantity, totalPrice, totalItems } = useCart();
@@ -43,7 +44,7 @@ const Cart = () => {
                 className="flex gap-4 p-4 bg-card rounded-lg border border-border"
               >
                 <img
-                  src={item.image}
+                  src={resolveImageUrl(item.image)}
                   alt={item.title}
                   className="w-24 h-36 object-cover rounded"
                 />

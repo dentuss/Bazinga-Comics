@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useCart } from "@/contexts/CartContext";
+import { resolveImageUrl } from "@/lib/images";
 
 const Wishlist = () => {
   const { items, removeFromWishlist } = useWishlist();
@@ -55,7 +56,7 @@ const Wishlist = () => {
               >
                 <div className="aspect-[2/3] overflow-hidden">
                   <img
-                    src={item.image}
+                    src={resolveImageUrl(item.image)}
                     alt={item.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />

@@ -10,6 +10,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { CreditCard, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch } from "@/lib/api";
+import { resolveImageUrl } from "@/lib/images";
 
 const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
@@ -155,7 +156,7 @@ const Checkout = () => {
                 {items.map((item) => (
                   <div key={item.id} className="flex gap-3">
                     <img
-                      src={item.image}
+                      src={resolveImageUrl(item.image)}
                       alt={item.title}
                       className="w-16 h-24 object-cover rounded"
                     />
