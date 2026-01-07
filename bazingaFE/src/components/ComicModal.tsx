@@ -10,6 +10,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { resolveImageUrl } from "@/lib/images";
 
 interface ComicModalProps {
   isOpen: boolean;
@@ -80,7 +81,7 @@ const ComicModal = ({ isOpen, onClose, comic }: ComicModalProps) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <img
-              src={comic.image}
+              src={resolveImageUrl(comic.image)}
               alt={comic.title}
               className="w-full rounded-lg shadow-lg"
             />

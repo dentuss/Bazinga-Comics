@@ -1,3 +1,5 @@
+import { resolveImageUrl } from "@/lib/images";
+
 interface ComicCardProps {
   image: string;
   title: string;
@@ -21,7 +23,7 @@ const ComicCard = ({ image, title, creators, comicType, onClick }: ComicCardProp
       )}
       <div className="aspect-[2/3] overflow-hidden">
         <img
-          src={image}
+          src={resolveImageUrl(image)}
           alt={title}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
         />

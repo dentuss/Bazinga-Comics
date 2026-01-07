@@ -11,6 +11,7 @@ import BrowseByFilter from "@/components/BrowseByFilter";
 import ComicModal from "@/components/ComicModal";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
+import { resolveImageUrl } from "@/lib/images";
 
 export interface ComicDto {
   id: number;
@@ -158,7 +159,7 @@ const Index = () => {
                       </span>
                     )}
                     <img
-                      src={comic.image}
+                      src={resolveImageUrl(comic.image)}
                       alt={comic.title}
                       className="w-full aspect-[2/3] object-cover"
                     />

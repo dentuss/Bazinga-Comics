@@ -3,6 +3,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch } from "@/lib/api";
+import { resolveImageUrl } from "@/lib/images";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
@@ -64,7 +65,7 @@ const Library = () => {
                       </span>
                     )}
                     <img
-                      src={item.comic.image}
+                      src={resolveImageUrl(item.comic.image)}
                       alt={item.comic.title}
                       className="h-64 w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
