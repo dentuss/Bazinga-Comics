@@ -124,7 +124,7 @@ public class CartController {
             newCart.setUser(user);
             return cartRepository.save(newCart);
         });
-        cartItemRepository.deleteByCart(cart);
+        cartItemRepository.deleteByCartId(cart.getId());
         return getCart(authentication);
     }
 
