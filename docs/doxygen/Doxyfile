@@ -1,0 +1,25 @@
+PROJECT_NAME           = "Bazinga Comics"
+PROJECT_BRIEF          = "Backend + Frontend documentation for the Bazinga Comics storefront"
+OUTPUT_DIRECTORY       = docs/doxygen/site
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_LATEX         = NO
+EXTRACT_ALL            = YES
+EXTRACT_STATIC         = YES
+EXTRACT_PRIVATE        = NO
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = YES
+MARKDOWN_SUPPORT       = YES
+USE_MDFILE_AS_MAINPAGE = docs/doxygen/mainpage.md
+RECURSIVE              = YES
+STRIP_FROM_PATH        = /workspace/Bazinga-Comics
+INPUT                  = \
+  docs/doxygen/mainpage.md \
+  docs/doxygen/pages \
+  bazingaBE/src/main/java \
+  bazingaBE/src/main/resources \
+  bazingaFE/src
+FILE_PATTERNS          = *.java *.kt *.js *.jsx *.ts *.tsx *.css *.scss *.md *.sql *.properties
+OPTIMIZE_OUTPUT_JAVA   = YES
+WARN_IF_UNDOCUMENTED   = NO
+QUIET                  = NO
