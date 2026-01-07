@@ -23,6 +23,7 @@ export interface ComicDto {
   price: number;
   category?: { name: string };
   comicType?: string;
+  createdAt?: string;
 }
 
 const Index = () => {
@@ -108,7 +109,16 @@ const Index = () => {
 
   const isFiltered = searchQuery || browseFilter.value || viewAll || viewDigital;
 
-  const newThisWeek = allComics.slice(0, 12);
+  const newThisWeek = useMemo(
+    () =>
+      [...allComics]
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
+        )
+        .slice(0, 6),
+    [allComics]
+  );
   const digitalRead = digitalExclusiveComics.slice(0, 10);
 
   return (
@@ -182,6 +192,7 @@ const Index = () => {
               id="new-this-week" 
               title="NEW THIS WEEK" 
               comics={newThisWeek} 
+              showViewAll={false}
               onComicClick={handleComicClick}
             />
             <ComicSection 
