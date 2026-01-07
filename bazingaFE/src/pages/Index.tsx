@@ -75,12 +75,10 @@ const Index = () => {
     };
   }, [allComics]);
 
-  const digitalReadComics = allComics.filter(
-    (comic) => comic.comicType === "ONLY_DIGITAL" || comic.comicType === "PHYSICAL_COPY"
-  );
+  const digitalExclusiveComics = allComics.filter((comic) => comic.comicType === "ONLY_DIGITAL");
 
   const filteredComics = useMemo(() => {
-    let comics = [...(viewDigital ? digitalReadComics : allComics)];
+    let comics = [...(viewDigital ? digitalExclusiveComics : allComics)];
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -106,12 +104,12 @@ const Index = () => {
     }
 
     return comics;
-  }, [searchQuery, browseFilter, viewDigital, allComics, digitalReadComics]);
+  }, [searchQuery, browseFilter, viewDigital, allComics, digitalExclusiveComics]);
 
   const isFiltered = searchQuery || browseFilter.value || viewAll || viewDigital;
 
   const newThisWeek = allComics.slice(0, 12);
-  const digitalRead = digitalReadComics.slice(4, 10);
+  const digitalRead = digitalExclusiveComics.slice(4, 10);
 
   return (
     <div className="min-h-screen bg-background">
@@ -134,7 +132,7 @@ const Index = () => {
                   : viewAll
                     ? "ALL COMICS"
                     : viewDigital
-                      ? "DIGITAL READ"
+                      ? "DIGITAL EXCLUSIVE"
                       : "FILTERED RESULTS"}
                 <span className="text-muted-foreground text-lg font-normal ml-2">({filteredComics.length} comics)</span>
               </h2>
@@ -188,12 +186,19 @@ const Index = () => {
             />
             <ComicSection 
               id="digital-read" 
-              title="DIGITAL READ" 
+              title="DIGITAL EXCLUSIVE" 
               comics={digitalRead}
               viewAllHref="/?view=digital"
               onComicClick={handleComicClick}
             />
             <UnlimitedBanner />
+            <ComicSection
+              id="all-comics"
+              title="ALL COMICS"
+              comics={allComics}
+              showViewAll={false}
+              onComicClick={handleComicClick}
+            />
           </>
         )}
       </main>
