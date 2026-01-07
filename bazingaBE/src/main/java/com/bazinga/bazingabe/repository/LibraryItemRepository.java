@@ -8,4 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface LibraryItemRepository extends JpaRepository<LibraryItem, Long> {
     Optional<LibraryItem> findByLibraryAndComic(Library library, Comic comic);
+    void deleteByComic(Comic comic);
 }

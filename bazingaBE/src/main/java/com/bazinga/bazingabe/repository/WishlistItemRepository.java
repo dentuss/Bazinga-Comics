@@ -9,4 +9,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface WishlistItemRepository extends JpaRepository<WishlistItem, Long> {
     Optional<WishlistItem> findByWishlistAndComic(Wishlist wishlist, Comic comic);
     void deleteByWishlist(Wishlist wishlist);
+    void deleteByComic(Comic comic);
 }

@@ -41,6 +41,14 @@ type AdminComic = {
   title: string;
   author?: string | null;
   series?: string | null;
+  isbn?: string | null;
+  description?: string | null;
+  mainCharacter?: string | null;
+  publishedYear?: number | null;
+  condition?: Condition | null;
+  category?: Category | null;
+  price?: number | null;
+  image?: string | null;
   comicType?: string | null;
   redacted?: boolean;
 };
@@ -81,6 +89,8 @@ const Admin = () => {
   const [userFormState, setUserFormState] = useState(initialUserFormState);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [editFormState, setEditFormState] = useState(initialUserFormState);
+  const [editingComic, setEditingComic] = useState<AdminComic | null>(null);
+  const [editComicFormState, setEditComicFormState] = useState(initialFormState);
   const isAdmin = user?.role === "ADMIN";
 
   const { data: categories = [], isError: categoriesError } = useQuery<Category[]>({
@@ -140,6 +150,10 @@ const Admin = () => {
     setEditFormState((prev) => ({ ...prev, [field]: value }));
   };
 
+  const updateEditComicField = (field: keyof typeof editComicFormState, value: string) => {
+    setEditComicFormState((prev) => ({ ...prev, [field]: value }));
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!token) {
@@ -155,7 +169,7 @@ const Admin = () => {
       await apiFetch("/api/comics", {
         method: "POST",
         authToken: token,
-          body: JSON.stringify({
+        body: JSON.stringify({
           title: formState.title,
           author: formState.author || null,
           isbn: formState.isbn || null,
@@ -175,6 +189,8 @@ const Admin = () => {
         description: `${formState.title} has been added to the catalog.`,
       });
       setFormState(initialFormState);
+      queryClient.invalidateQueries({ queryKey: ["admin-comics"] });
+      queryClient.invalidateQueries({ queryKey: ["comics"] });
     } catch (error: any) {
       toast({
         title: "Unable to add comic",
@@ -300,6 +316,114 @@ const Admin = () => {
     } catch (error: any) {
       toast({
         title: "Unable to update comic",
+        description: error?.message || "Please try again in a moment.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditComic = (selected: AdminComic) => {
+    setEditingComic(selected);
+    setEditComicFormState({
+      title: selected.title || "",
+      author: selected.author || "",
+      isbn: selected.isbn || "",
+      description: selected.description || "",
+      mainCharacter: selected.mainCharacter || "",
+      series: selected.series || "",
+      publishedYear: selected.publishedYear ? String(selected.publishedYear) : "",
+      conditionId: selected.condition?.id ? String(selected.condition.id) : "",
+      categoryId: selected.category?.id ? String(selected.category.id) : "",
+      price: selected.price !== null && selected.price !== undefined ? String(selected.price) : "",
+      image: selected.image || "",
+      isDigitalOnly: selected.comicType === "ONLY_DIGITAL",
+    });
+  };
+
+  const handleUpdateComic = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!token || !editingComic) {
+      return;
+    }
+
+    try {
+      await apiFetch(`/api/admin/comics/${editingComic.id}`, {
+        method: "PUT",
+        authToken: token,
+        body: JSON.stringify({
+          title: editComicFormState.title,
+          author: editComicFormState.author || null,
+          isbn: editComicFormState.isbn || null,
+          description: editComicFormState.description || null,
+          series: editComicFormState.series || null,
+          publishedYear: editComicFormState.publishedYear ? Number(editComicFormState.publishedYear) : null,
+          conditionId: editComicFormState.conditionId ? Number(editComicFormState.conditionId) : null,
+          categoryId: editComicFormState.categoryId ? Number(editComicFormState.categoryId) : null,
+          price: editComicFormState.price ? Number(editComicFormState.price) : null,
+          image: editComicFormState.image || null,
+          mainCharacter: editComicFormState.mainCharacter || null,
+          comicType: editComicFormState.isDigitalOnly ? "ONLY_DIGITAL" : null,
+        }),
+      });
+      toast({
+        title: "Comic updated",
+        description: `${editComicFormState.title} has been updated.`,
+      });
+      setEditingComic(null);
+      setEditComicFormState(initialFormState);
+      queryClient.invalidateQueries({ queryKey: ["admin-comics"] });
+      queryClient.invalidateQueries({ queryKey: ["comics"] });
+    } catch (error: any) {
+      toast({
+        title: "Unable to update comic",
+        description: error?.message || "Please check the comic details and try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteComic = async (selected: AdminComic) => {
+    if (!token) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in with an admin account to delete comics.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selected.redacted) {
+      toast({
+        title: "Redact first",
+        description: "Comics must be redacted before they can be deleted.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const confirmed = window.confirm(`Permanently delete ${selected.title}? This cannot be undone.`);
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await apiFetch(`/api/admin/comics/${selected.id}`, {
+        method: "DELETE",
+        authToken: token,
+      });
+      toast({
+        title: "Comic deleted",
+        description: `${selected.title} has been removed from the catalog.`,
+      });
+      if (editingComic?.id === selected.id) {
+        setEditingComic(null);
+        setEditComicFormState(initialFormState);
+      }
+      queryClient.invalidateQueries({ queryKey: ["admin-comics"] });
+      queryClient.invalidateQueries({ queryKey: ["comics"] });
+    } catch (error: any) {
+      toast({
+        title: "Unable to delete comic",
         description: error?.message || "Please try again in a moment.",
         variant: "destructive",
       });
@@ -513,10 +637,10 @@ const Admin = () => {
                   </div>
                 </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
                     placeholder="Short description for the storefront..."
                     rows={5}
                     value={formState.description}
@@ -540,7 +664,8 @@ const Admin = () => {
             <p className="text-sm text-primary font-semibold tracking-wide uppercase">Comic moderation</p>
             <h2 className="text-2xl md:text-3xl font-black text-foreground mt-2">Redact comics</h2>
             <p className="text-muted-foreground mt-3 max-w-2xl">
-              Redacted comics are hidden from the storefront and digital reader views. Restore them at any time.
+              Redacted comics are hidden from the storefront and digital reader views. Restore them at any time. Hard
+              deletes are available after redaction.
             </p>
           </div>
 
@@ -568,13 +693,23 @@ const Admin = () => {
                         <p className="font-semibold">{comic.title}</p>
                         <p className="text-sm text-muted-foreground">{comic.series || "No series listed"}</p>
                       </div>
-                      <Button
-                        size="sm"
-                        variant={comic.redacted ? "secondary" : "destructive"}
-                        onClick={() => handleRedaction(comic.id, !comic.redacted)}
-                      >
-                        {comic.redacted ? "Restore" : "Redact"}
-                      </Button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant={comic.redacted ? "secondary" : "destructive"}
+                          onClick={() => handleRedaction(comic.id, !comic.redacted)}
+                        >
+                          {comic.redacted ? "Restore" : "Redact"}
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleEditComic(comic)}>
+                          Edit
+                        </Button>
+                        {comic.redacted && (
+                          <Button size="sm" variant="destructive" onClick={() => handleDeleteComic(comic)}>
+                            Delete
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {comic.author ? `Author: ${comic.author}` : "No author on file"} · Status:{" "}
@@ -585,6 +720,195 @@ const Admin = () => {
               </div>
             </CardContent>
           </Card>
+
+          {editingComic && (
+            <Card className="shadow-lg border-muted">
+              <CardHeader>
+                <CardTitle>Edit comic</CardTitle>
+                <CardDescription>Update the catalog details for {editingComic.title}.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form className="space-y-6" onSubmit={handleUpdateComic}>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-title">Title</Label>
+                      <Input
+                        id="edit-title"
+                        placeholder="Amazing Fantasy #15"
+                        value={editComicFormState.title}
+                        onChange={(event) => updateEditComicField("title", event.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-author">Author</Label>
+                      <Input
+                        id="edit-author"
+                        placeholder="Stan Lee"
+                        value={editComicFormState.author}
+                        onChange={(event) => updateEditComicField("author", event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-series">Series</Label>
+                      <Input
+                        id="edit-series"
+                        placeholder="Spider-Man"
+                        value={editComicFormState.series}
+                        onChange={(event) => updateEditComicField("series", event.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-main-character">Main character</Label>
+                      <Input
+                        id="edit-main-character"
+                        placeholder="Peter Parker"
+                        value={editComicFormState.mainCharacter}
+                        onChange={(event) => updateEditComicField("mainCharacter", event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-isbn">ISBN</Label>
+                      <Input
+                        id="edit-isbn"
+                        placeholder="978-1302926735"
+                        value={editComicFormState.isbn}
+                        onChange={(event) => updateEditComicField("isbn", event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-published-year">Published year</Label>
+                      <Input
+                        id="edit-published-year"
+                        type="number"
+                        placeholder="1962"
+                        min="1900"
+                        max="2100"
+                        value={editComicFormState.publishedYear}
+                        onChange={(event) => updateEditComicField("publishedYear", event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-price">Price</Label>
+                      <Input
+                        id="edit-price"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="14.99"
+                        value={editComicFormState.price}
+                        onChange={(event) => updateEditComicField("price", event.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-image">Cover image URL</Label>
+                      <Input
+                        id="edit-image"
+                        placeholder="https://..."
+                        value={editComicFormState.image}
+                        onChange={(event) => updateEditComicField("image", event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-category">Category</Label>
+                      <Select
+                        value={editComicFormState.categoryId}
+                        onValueChange={(value) => updateEditComicField("categoryId", value)}
+                      >
+                        <SelectTrigger id="edit-category">
+                          <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={String(category.id)}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                          {!categories.length && (
+                            <SelectItem value="none" disabled>
+                              {categoriesError ? "Unable to load categories" : "No categories available"}
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-condition">Condition</Label>
+                      <Select
+                        value={editComicFormState.conditionId}
+                        onValueChange={(value) => updateEditComicField("conditionId", value)}
+                      >
+                        <SelectTrigger id="edit-condition">
+                          <SelectValue placeholder="Select condition" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {conditions.map((condition) => (
+                            <SelectItem key={condition.id} value={String(condition.id)}>
+                              {condition.description}
+                            </SelectItem>
+                          ))}
+                          {!conditions.length && (
+                            <SelectItem value="none" disabled>
+                              {conditionsError ? "Unable to load conditions" : "No conditions available"}
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-digital-only">Digital only</Label>
+                      <div className="flex items-center gap-3 rounded-lg border border-border px-3 py-2">
+                        <Switch
+                          id="edit-digital-only"
+                          checked={editComicFormState.isDigitalOnly}
+                          onCheckedChange={(checked) =>
+                            setEditComicFormState((prev) => ({ ...prev, isDigitalOnly: checked }))
+                          }
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          Enable to list this comic as a digital-only release.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-description">Description</Label>
+                    <Textarea
+                      id="edit-description"
+                      placeholder="Short description for the storefront..."
+                      rows={5}
+                      value={editComicFormState.description}
+                      onChange={(event) => updateEditComicField("description", event.target.value)}
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-xs text-muted-foreground">
+                      Updating a comic will refresh the storefront listing immediately.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <Button type="submit" className="px-8">
+                        Save changes
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setEditingComic(null);
+                          setEditComicFormState(initialFormState);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="pt-4 border-t border-muted">
             <p className="text-sm text-primary font-semibold tracking-wide uppercase">User management</p>

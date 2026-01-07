@@ -10,4 +10,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface CartItemRepository extends JpaRepository<CartItem, Long> {
     Optional<CartItem> findByCartAndComicAndPurchaseType(Cart cart, Comic comic, PurchaseType purchaseType);
     void deleteByCart(Cart cart);
+    void deleteByComic(Comic comic);
 }
