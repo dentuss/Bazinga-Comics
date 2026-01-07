@@ -63,6 +63,9 @@ public class Comic {
     @Column(name = "comic_type", nullable = false, length = 20)
     private ComicType comicType = ComicType.PHYSICAL_COPY;
 
+    @Column(nullable = false)
+    private boolean redacted = false;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -183,6 +186,14 @@ public class Comic {
 
     public void setComicType(ComicType comicType) {
         this.comicType = comicType;
+    }
+
+    public boolean isRedacted() {
+        return redacted;
+    }
+
+    public void setRedacted(boolean redacted) {
+        this.redacted = redacted;
     }
 
     public LocalDateTime getCreatedAt() {

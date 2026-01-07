@@ -33,9 +33,9 @@ public class ComicController {
             this.comicConditionRepository = comicConditionRepository;
         }
 
-        @GetMapping
-        public List<Comic> getAll() {
-            return comicRepository.findAll();
+    @GetMapping
+    public List<Comic> getAll() {
+            return comicRepository.findByRedactedFalse();
         }
 
         @PostMapping
