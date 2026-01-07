@@ -34,7 +34,12 @@ public class SubscriptionController {
         String type = request.getSubscriptionType() == null ? "" : request.getSubscriptionType().trim();
         String billing = request.getBillingCycle() == null ? "" : request.getBillingCycle().trim().toLowerCase();
 
-        if (!type.equalsIgnoreCase("Premium") && !type.equalsIgnoreCase("Unlimited")) {
+        String normalizedType;
+        if (type.equalsIgnoreCase("Premium") || type.equalsIgnoreCase("Prem")) {
+            normalizedType = "Premium";
+        } else if (type.equalsIgnoreCase("Unlimited")) {
+            normalizedType = "Unlimited";
+        } else {
             return ResponseEntity.badRequest().build();
         }
 
@@ -43,7 +48,9 @@ public class SubscriptionController {
         }
 
         User user = userRepository.findByEmail(authentication.getName()).orElseThrow();
-        if (user.getRole() != null && !user.getRole().equalsIgnoreCase("USER")) {
+        if (user.getRole() != null
+                && !user.getRole().equalsIgnoreCase("USER")
+                && !user.getRole().equalsIgnoreCase("EDITOR")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -51,7 +58,7 @@ public class SubscriptionController {
                 ? LocalDate.now().plusMonths(1)
                 : LocalDate.now().plusYears(1);
 
-        user.setSubscriptionType(type.substring(0, 1).toUpperCase() + type.substring(1).toLowerCase());
+        user.setSubscriptionType(normalizedType);
         user.setSubscriptionExpiration(expiration);
         User saved = userRepository.save(user);
 
