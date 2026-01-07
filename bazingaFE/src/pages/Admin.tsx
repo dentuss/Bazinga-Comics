@@ -36,6 +36,15 @@ type AdminUser = {
   updatedAt?: string;
 };
 
+type AdminComic = {
+  id: number;
+  title: string;
+  author?: string | null;
+  series?: string | null;
+  comicType?: string | null;
+  redacted?: boolean;
+};
+
 const initialFormState = {
   title: "",
   author: "",
@@ -68,6 +77,7 @@ const Admin = () => {
   const queryClient = useQueryClient();
   const [formState, setFormState] = useState(initialFormState);
   const [userSearch, setUserSearch] = useState("");
+  const [comicSearch, setComicSearch] = useState("");
   const [userFormState, setUserFormState] = useState(initialUserFormState);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [editFormState, setEditFormState] = useState(initialUserFormState);
@@ -94,7 +104,29 @@ const Admin = () => {
     enabled: Boolean(token),
   });
 
+  const {
+    data: adminComics = [],
+    isError: adminComicsError,
+    isLoading: adminComicsLoading,
+  } = useQuery<AdminComic[]>({
+    queryKey: ["admin-comics"],
+    queryFn: () => (token ? apiFetch<AdminComic[]>("/api/admin/comics", { authToken: token }) : Promise.resolve([])),
+    enabled: Boolean(token),
+  });
+
   const hasAdminAccess = useMemo(() => Boolean(user && isAdmin), [user, isAdmin]);
+  const filteredAdminComics = useMemo(() => {
+    const query = comicSearch.trim().toLowerCase();
+    if (!query) {
+      return adminComics;
+    }
+    return adminComics.filter((comic) => {
+      const title = comic.title.toLowerCase();
+      const series = comic.series?.toLowerCase() ?? "";
+      const author = comic.author?.toLowerCase() ?? "";
+      return title.includes(query) || series.includes(query) || author.includes(query);
+    });
+  }, [adminComics, comicSearch]);
 
   const updateField = (field: keyof typeof formState, value: string) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
@@ -236,6 +268,39 @@ const Admin = () => {
       toast({
         title: "Unable to update user",
         description: error?.message || "Please review the changes and try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRedaction = async (comicId: number, nextRedacted: boolean) => {
+    if (!token) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in with an admin account to update comic visibility.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await apiFetch(`/api/admin/comics/${comicId}/redaction`, {
+        method: "PUT",
+        authToken: token,
+        body: JSON.stringify({ redacted: nextRedacted }),
+      });
+      toast({
+        title: nextRedacted ? "Comic redacted" : "Comic restored",
+        description: nextRedacted
+          ? "The comic has been removed from the storefront."
+          : "The comic is visible again in the storefront.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-comics"] });
+      queryClient.invalidateQueries({ queryKey: ["comics"] });
+    } catch (error: any) {
+      toast({
+        title: "Unable to update comic",
+        description: error?.message || "Please try again in a moment.",
         variant: "destructive",
       });
     }
@@ -468,6 +533,56 @@ const Admin = () => {
                   </Button>
                 </div>
               </form>
+            </CardContent>
+          </Card>
+
+          <div className="pt-4 border-t border-muted">
+            <p className="text-sm text-primary font-semibold tracking-wide uppercase">Comic moderation</p>
+            <h2 className="text-2xl md:text-3xl font-black text-foreground mt-2">Redact comics</h2>
+            <p className="text-muted-foreground mt-3 max-w-2xl">
+              Redacted comics are hidden from the storefront and digital reader views. Restore them at any time.
+            </p>
+          </div>
+
+          <Card className="shadow-lg border-muted">
+            <CardHeader>
+              <CardTitle>Storefront visibility</CardTitle>
+              <CardDescription>Search the catalog and toggle redaction for each comic.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Input
+                placeholder="Search comics by title, series, or author..."
+                value={comicSearch}
+                onChange={(event) => setComicSearch(event.target.value)}
+              />
+              {adminComicsLoading && <p className="text-sm text-muted-foreground">Loading comics...</p>}
+              {adminComicsError && <p className="text-sm text-destructive">Unable to load comics right now.</p>}
+              {!adminComicsLoading && !adminComicsError && !filteredAdminComics.length && (
+                <p className="text-sm text-muted-foreground">No comics match your search.</p>
+              )}
+              <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                {filteredAdminComics.map((comic) => (
+                  <div key={comic.id} className="border border-muted rounded-lg p-3 space-y-2">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="font-semibold">{comic.title}</p>
+                        <p className="text-sm text-muted-foreground">{comic.series || "No series listed"}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={comic.redacted ? "secondary" : "destructive"}
+                        onClick={() => handleRedaction(comic.id, !comic.redacted)}
+                      >
+                        {comic.redacted ? "Restore" : "Redact"}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {comic.author ? `Author: ${comic.author}` : "No author on file"} · Status:{" "}
+                      {comic.redacted ? "Redacted" : "Live"}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
