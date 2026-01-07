@@ -8,21 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
-
-type Category = {
-  id: number;
-  name: string;
-};
-
-type Condition = {
-  id: number;
-  description: string;
-};
 
 type AdminUser = {
   id: number;
@@ -45,8 +34,6 @@ type AdminComic = {
   description?: string | null;
   mainCharacter?: string | null;
   publishedYear?: number | null;
-  condition?: Condition | null;
-  category?: Category | null;
   price?: number | null;
   image?: string | null;
   comicType?: string | null;
@@ -61,8 +48,6 @@ const initialFormState = {
   mainCharacter: "",
   series: "",
   publishedYear: "",
-  conditionId: "",
-  categoryId: "",
   price: "",
   image: "",
   isDigitalOnly: false,
@@ -92,16 +77,6 @@ const Admin = () => {
   const [editingComic, setEditingComic] = useState<AdminComic | null>(null);
   const [editComicFormState, setEditComicFormState] = useState(initialFormState);
   const isAdmin = user?.role === "ADMIN";
-
-  const { data: categories = [], isError: categoriesError } = useQuery<Category[]>({
-    queryKey: ["categories"],
-    queryFn: () => apiFetch<Category[]>("/api/categories"),
-  });
-
-  const { data: conditions = [], isError: conditionsError } = useQuery<Condition[]>({
-    queryKey: ["conditions"],
-    queryFn: () => apiFetch<Condition[]>("/api/conditions"),
-  });
 
   const { data: users = [], isError: usersError } = useQuery<AdminUser[]>({
     queryKey: ["admin-users", userSearch],
@@ -176,8 +151,6 @@ const Admin = () => {
           description: formState.description || null,
           series: formState.series || null,
           publishedYear: formState.publishedYear ? Number(formState.publishedYear) : null,
-          conditionId: formState.conditionId ? Number(formState.conditionId) : null,
-          categoryId: formState.categoryId ? Number(formState.categoryId) : null,
           price: formState.price ? Number(formState.price) : null,
           image: formState.image || null,
           mainCharacter: formState.mainCharacter || null,
@@ -332,8 +305,6 @@ const Admin = () => {
       mainCharacter: selected.mainCharacter || "",
       series: selected.series || "",
       publishedYear: selected.publishedYear ? String(selected.publishedYear) : "",
-      conditionId: selected.condition?.id ? String(selected.condition.id) : "",
-      categoryId: selected.category?.id ? String(selected.category.id) : "",
       price: selected.price !== null && selected.price !== undefined ? String(selected.price) : "",
       image: selected.image || "",
       isDigitalOnly: selected.comicType === "ONLY_DIGITAL",
@@ -357,8 +328,6 @@ const Admin = () => {
           description: editComicFormState.description || null,
           series: editComicFormState.series || null,
           publishedYear: editComicFormState.publishedYear ? Number(editComicFormState.publishedYear) : null,
-          conditionId: editComicFormState.conditionId ? Number(editComicFormState.conditionId) : null,
-          categoryId: editComicFormState.categoryId ? Number(editComicFormState.categoryId) : null,
           price: editComicFormState.price ? Number(editComicFormState.price) : null,
           image: editComicFormState.image || null,
           mainCharacter: editComicFormState.mainCharacter || null,
@@ -482,8 +451,7 @@ const Admin = () => {
             <p className="text-sm text-primary font-semibold tracking-wide uppercase">Admin console</p>
             <h1 className="text-3xl md:text-4xl font-black text-foreground mt-2">Add a new comic</h1>
             <p className="text-muted-foreground mt-3 max-w-2xl">
-              Fill in the catalog details below. The form mirrors the backend comic entity, including condition,
-              category, and pricing metadata.
+              Fill in the catalog details below. The form mirrors the backend comic entity, including pricing metadata.
             </p>
           </div>
 
@@ -575,52 +543,6 @@ const Admin = () => {
                       value={formState.image}
                       onChange={(event) => updateField("image", event.target.value)}
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="categoryId">Category</Label>
-                    <Select
-                      value={formState.categoryId}
-                      onValueChange={(value) => updateField("categoryId", value)}
-                    >
-                      <SelectTrigger id="categoryId">
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={String(category.id)}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                        {!categories.length && (
-                          <SelectItem value="none" disabled>
-                            {categoriesError ? "Unable to load categories" : "No categories available"}
-                          </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="conditionId">Condition</Label>
-                    <Select
-                      value={formState.conditionId}
-                      onValueChange={(value) => updateField("conditionId", value)}
-                    >
-                      <SelectTrigger id="conditionId">
-                        <SelectValue placeholder="Select condition" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {conditions.map((condition) => (
-                          <SelectItem key={condition.id} value={String(condition.id)}>
-                            {condition.description}
-                          </SelectItem>
-                        ))}
-                        {!conditions.length && (
-                          <SelectItem value="none" disabled>
-                            {conditionsError ? "Unable to load conditions" : "No conditions available"}
-                          </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="digitalOnly">Digital only</Label>
@@ -810,52 +732,6 @@ const Admin = () => {
                         value={editComicFormState.image}
                         onChange={(event) => updateEditComicField("image", event.target.value)}
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-category">Category</Label>
-                      <Select
-                        value={editComicFormState.categoryId}
-                        onValueChange={(value) => updateEditComicField("categoryId", value)}
-                      >
-                        <SelectTrigger id="edit-category">
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={String(category.id)}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                          {!categories.length && (
-                            <SelectItem value="none" disabled>
-                              {categoriesError ? "Unable to load categories" : "No categories available"}
-                            </SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="edit-condition">Condition</Label>
-                      <Select
-                        value={editComicFormState.conditionId}
-                        onValueChange={(value) => updateEditComicField("conditionId", value)}
-                      >
-                        <SelectTrigger id="edit-condition">
-                          <SelectValue placeholder="Select condition" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {conditions.map((condition) => (
-                            <SelectItem key={condition.id} value={String(condition.id)}>
-                              {condition.description}
-                            </SelectItem>
-                          ))}
-                          {!conditions.length && (
-                            <SelectItem value="none" disabled>
-                              {conditionsError ? "Unable to load conditions" : "No conditions available"}
-                            </SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="edit-digital-only">Digital only</Label>
