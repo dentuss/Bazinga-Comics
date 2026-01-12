@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +26,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,9 +60,33 @@ fun CartScreen(
     onUpdateQuantity: (Long, Int) -> Unit,
     onRemoveItem: (Long) -> Unit
 ) {
+    var pendingRemoval by remember { mutableStateOf<CartItemDto?>(null) }
     val items = (cartState as? UiState.Success)?.data.orEmpty()
     val totalItems = items.sumOf { it.quantity }
     val totalPrice = items.sumOf { it.unitPrice * it.quantity }
+
+    if (pendingRemoval != null) {
+        AlertDialog(
+            onDismissRequest = { pendingRemoval = null },
+            title = { Text(text = "Remove item?") },
+            text = { Text(text = "Are you sure you want to remove ${pendingRemoval?.comic?.title} from your cart?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        pendingRemoval?.let { onRemoveItem(it.id) }
+                        pendingRemoval = null
+                    }
+                ) {
+                    Text("Remove")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingRemoval = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -107,7 +136,7 @@ fun CartScreen(
                                         item = item,
                                         onIncrease = { onUpdateQuantity(item.id, item.quantity + 1) },
                                         onDecrease = { onUpdateQuantity(item.id, item.quantity - 1) },
-                                        onRemove = { onRemoveItem(item.id) }
+                                        onRemove = { pendingRemoval = item }
                                     )
                                 }
                             }
