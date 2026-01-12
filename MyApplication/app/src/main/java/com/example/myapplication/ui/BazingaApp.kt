@@ -38,6 +38,7 @@ import com.example.myapplication.ui.screens.CheckoutScreen
 import com.example.myapplication.ui.screens.NewsScreen
 import com.example.myapplication.ui.screens.ProfileScreen
 import com.example.myapplication.ui.screens.ReaderScreen
+import com.example.myapplication.ui.screens.SubscriptionScreen
 import com.example.myapplication.ui.screens.home.HomeScreen
 import com.example.myapplication.ui.screens.LibraryScreen
 import kotlinx.coroutines.launch
@@ -126,7 +127,17 @@ fun BazingaApp() {
                             }
                         }
                     },
-                    onNavigateToLibrary = { navController.navigate(Screen.Library.route) }
+                    onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
+                    onNavigateToSubscription = {
+                        if (authState.token.isBlank()) {
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Sign in to subscribe.")
+                            }
+                            navController.navigate(Screen.Library.route)
+                        } else {
+                            navController.navigate(Screen.Subscription.route)
+                        }
+                    }
                 )
             }
             composable(Screen.Library.route) {
@@ -205,6 +216,15 @@ fun BazingaApp() {
                             }
                         }
                     }
+                )
+            }
+            composable(Screen.Subscription.route) {
+                SubscriptionScreen(
+                    repository = repository,
+                    authState = authState,
+                    onAuthStateChange = { authState = it },
+                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                    onBack = { navController.popBackStack() }
                 )
             }
             composable(
