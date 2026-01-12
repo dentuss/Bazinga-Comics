@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -409,17 +410,20 @@ private fun FilteredResults(
             }
         }
         Spacer(modifier = Modifier.height(12.dp))
-        FlowRow(
-            maxItemsInEachRow = 2,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            comics.forEach { comic ->
-                ComicGridCard(
-                    comic = comic,
-                    modifier = Modifier.width(160.dp),
-                    onClick = { onComicClick(comic) }
-                )
+        BoxWithConstraints {
+            val cardWidth = (maxWidth - 24.dp) / 3
+            FlowRow(
+                maxItemsInEachRow = 3,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                comics.forEach { comic ->
+                    ComicGridCard(
+                        comic = comic,
+                        modifier = Modifier.width(cardWidth),
+                        onClick = { onComicClick(comic) }
+                    )
+                }
             }
         }
     }
