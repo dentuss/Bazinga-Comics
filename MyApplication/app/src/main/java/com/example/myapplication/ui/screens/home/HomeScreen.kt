@@ -752,18 +752,23 @@ private fun ComicDetailDialog(
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 if (!isDigitalExclusive) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
                         PurchaseTypeCard(
                             title = "Original Copy",
                             subtitle = if (originalPrice == 0.0) "FREE WITH UNLIMITED" else "$${"%.2f".format(originalPrice)}",
                             isSelected = purchaseType == "ORIGINAL",
-                            onClick = { purchaseType = "ORIGINAL" }
+                            onClick = { purchaseType = "ORIGINAL" },
+                            modifier = Modifier.weight(1f)
                         )
                         PurchaseTypeCard(
                             title = "Digital Copy",
                             subtitle = if (digitalPrice == 0.0) "FREE WITH UNLIMITED" else "$${"%.2f".format(digitalPrice)}",
                             isSelected = purchaseType == "DIGITAL",
-                            onClick = { purchaseType = "DIGITAL" }
+                            onClick = { purchaseType = "DIGITAL" },
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
