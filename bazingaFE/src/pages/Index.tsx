@@ -207,7 +207,7 @@ const Index = () => {
               id="all-comics"
               title="ALL COMICS"
               comics={allComics}
-              showViewAll={false}
+              viewAllHref="/?view=all"
               onComicClick={handleComicClick}
             />
           </>

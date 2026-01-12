@@ -73,3 +73,13 @@ data class NewsPostRequest(
     val title: String,
     val content: String
 )
+
+data class SubscriptionRequest(
+    val subscriptionType: String,
+    val billingCycle: String
+)
+
+data class SubscriptionResponse(
+    val subscriptionType: String,
+    val subscriptionExpiration: String?
+)

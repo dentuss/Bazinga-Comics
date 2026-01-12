@@ -102,4 +102,19 @@ class BazingaRepository(private val api: BazingaApi) {
                 onSuccess = { UiState.Success(it) },
                 onFailure = { UiState.Error(it.message ?: "Unable to post news") }
             )
+
+    suspend fun subscribe(
+        token: String,
+        subscriptionType: String,
+        billingCycle: String
+    ): UiState<SubscriptionResponse> =
+        runCatching {
+            api.subscribe(
+                "Bearer $token",
+                SubscriptionRequest(subscriptionType = subscriptionType, billingCycle = billingCycle)
+            )
+        }.fold(
+            onSuccess = { UiState.Success(it) },
+            onFailure = { UiState.Error(it.message ?: "Unable to activate subscription") }
+        )
 }

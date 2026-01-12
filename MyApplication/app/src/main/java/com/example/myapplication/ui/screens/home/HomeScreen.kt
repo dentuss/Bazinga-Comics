@@ -73,13 +73,15 @@ fun HomeScreen(
     repository: BazingaRepository,
     authState: AuthState,
     onAddToCart: (ComicDto, String) -> Unit,
-    onNavigateToLibrary: () -> Unit
+    onNavigateToLibrary: () -> Unit,
+    onNavigateToSubscription: () -> Unit
 ) {
     var comicsState by remember { mutableStateOf<UiState<List<ComicDto>>>(UiState.Loading) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var filterState by remember { mutableStateOf(FilterState()) }
     var digitalOnly by rememberSaveable { mutableStateOf(false) }
     var selectedComic by remember { mutableStateOf<ComicDto?>(null) }
+    var viewAllTarget by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         comicsState = repository.fetchComics()
@@ -137,7 +139,14 @@ fun HomeScreen(
     }
 
     val isFiltered = searchQuery.isNotBlank() || digitalOnly ||
-        (filterState.value.isNotBlank() && !filterState.value.startsWith("All"))
+        (filterState.value.isNotBlank() && !filterState.value.startsWith("All")) || viewAllTarget != null
+
+    val filteredTitle = when {
+        searchQuery.isNotBlank() -> "SEARCH RESULTS FOR \"${searchQuery.uppercase()}\""
+        digitalOnly || viewAllTarget == "digital" -> "DIGITAL EXCLUSIVE"
+        viewAllTarget == "all" -> "ALL COMICS"
+        else -> "FILTERED RESULTS"
+    }
 
     val newThisWeek = allComics
         .sortedByDescending { parseInstant(it.createdAt) }
@@ -155,7 +164,7 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             item { BazingaHeader(onLibraryClick = onNavigateToLibrary) }
-            item { HeroBanner() }
+            item { HeroBanner(onSubscribeClick = onNavigateToSubscription) }
             item { SearchBar(searchQuery = searchQuery, onSearchChange = { searchQuery = it }) }
             item {
                 BrowseFilters(
@@ -163,9 +172,15 @@ fun HomeScreen(
                     characterOptions = characterOptions,
                     creatorOptions = creatorOptions,
                     digitalOnly = digitalOnly,
-                    onDigitalToggle = { digitalOnly = it },
+                    onDigitalToggle = {
+                        digitalOnly = it
+                        viewAllTarget = null
+                    },
                     filterState = filterState,
-                    onFilterChange = { type, value -> filterState = FilterState(type, value) }
+                    onFilterChange = { type, value ->
+                        filterState = FilterState(type, value)
+                        viewAllTarget = null
+                    }
                 )
             }
             item {
@@ -176,6 +191,13 @@ fun HomeScreen(
                         if (isFiltered) {
                             FilteredResults(
                                 comics = filteredComics,
+                                title = filteredTitle,
+                                onClearFilters = {
+                                    searchQuery = ""
+                                    digitalOnly = false
+                                    filterState = FilterState()
+                                    viewAllTarget = null
+                                },
                                 onComicClick = { comic ->
                                     selectedComic = comics.find { it.id == comic.id }
                                 }
@@ -185,6 +207,7 @@ fun HomeScreen(
                                 ComicSection(
                                     title = "NEW THIS WEEK",
                                     comics = newThisWeek,
+                                    showViewAll = false,
                                     onComicClick = { comic ->
                                         selectedComic = comics.find { it.id == comic.id }
                                     }
@@ -192,14 +215,26 @@ fun HomeScreen(
                                 ComicSection(
                                     title = "DIGITAL EXCLUSIVE",
                                     comics = digitalRead,
+                                    onViewAll = {
+                                        viewAllTarget = "digital"
+                                        digitalOnly = true
+                                        searchQuery = ""
+                                        filterState = FilterState()
+                                    },
                                     onComicClick = { comic ->
                                         selectedComic = comics.find { it.id == comic.id }
                                     }
                                 )
-                                UnlimitedBanner()
+                                UnlimitedBanner(onSubscribeClick = onNavigateToSubscription)
                                 ComicSection(
                                     title = "ALL COMICS",
                                     comics = allComics,
+                                    onViewAll = {
+                                        viewAllTarget = "all"
+                                        digitalOnly = false
+                                        searchQuery = ""
+                                        filterState = FilterState()
+                                    },
                                     onComicClick = { comic ->
                                         selectedComic = comics.find { it.id == comic.id }
                                     }
@@ -344,24 +379,34 @@ private fun BrowseFilters(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun FilteredResults(comics: List<ComicViewData>, onComicClick: (ComicViewData) -> Unit) {
+private fun FilteredResults(
+    comics: List<ComicViewData>,
+    title: String,
+    onClearFilters: () -> Unit,
+    onComicClick: (ComicViewData) -> Unit
+) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "FILTERED RESULTS",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Text(
-                text = "${comics.size} comics",
-                fontSize = 12.sp,
-                color = BazingaTextMuted
-            )
+            Column {
+                Text(
+                    text = title,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = "${comics.size} comics",
+                    fontSize = 12.sp,
+                    color = BazingaTextMuted
+                )
+            }
+            TextButton(onClick = onClearFilters) {
+                Text(text = "Clear filters")
+            }
         }
         Spacer(modifier = Modifier.height(12.dp))
         FlowRow(
@@ -407,7 +452,7 @@ private fun BazingaHeader(onLibraryClick: () -> Unit) {
 }
 
 @Composable
-private fun HeroBanner() {
+private fun HeroBanner(onSubscribeClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -452,7 +497,7 @@ private fun HeroBanner() {
                     modifier = Modifier.padding(top = 8.dp)
                 )
                 Button(
-                    onClick = {},
+                    onClick = onSubscribeClick,
                     modifier = Modifier.padding(top = 12.dp)
                 ) {
                     Text(text = "Start Reading")
@@ -466,7 +511,9 @@ private fun HeroBanner() {
 private fun ComicSection(
     title: String,
     comics: List<ComicViewData>,
-    onComicClick: (ComicViewData) -> Unit
+    onComicClick: (ComicViewData) -> Unit,
+    showViewAll: Boolean = true,
+    onViewAll: (() -> Unit)? = null
 ) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Row(
@@ -480,11 +527,19 @@ private fun ComicSection(
                 fontWeight = FontWeight.Black,
                 color = MaterialTheme.colorScheme.onBackground
             )
-            Text(
-                text = "View All",
-                fontSize = 12.sp,
-                color = BazingaTextMuted
-            )
+            if (showViewAll) {
+                val viewAllModifier = if (onViewAll != null) {
+                    Modifier.clickable { onViewAll() }
+                } else {
+                    Modifier
+                }
+                Text(
+                    text = "View All",
+                    fontSize = 12.sp,
+                    color = BazingaTextMuted,
+                    modifier = viewAllModifier
+                )
+            }
         }
         LazyRow(
             contentPadding = PaddingValues(top = 12.dp),
@@ -638,7 +693,7 @@ private fun ComicGridCard(comic: ComicViewData, modifier: Modifier = Modifier, o
 }
 
 @Composable
-private fun UnlimitedBanner() {
+private fun UnlimitedBanner(onSubscribeClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -661,7 +716,7 @@ private fun UnlimitedBanner() {
                 modifier = Modifier.padding(top = 6.dp)
             )
             Button(
-                onClick = {},
+                onClick = onSubscribeClick,
                 modifier = Modifier.padding(top = 12.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White)

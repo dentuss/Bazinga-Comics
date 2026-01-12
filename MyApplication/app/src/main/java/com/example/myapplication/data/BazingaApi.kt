@@ -64,6 +64,12 @@ interface BazingaApi {
         @Header("Authorization") token: String,
         @Body request: NewsPostRequest
     ): NewsPostDto
+
+    @POST("/api/subscriptions/subscribe")
+    suspend fun subscribe(
+        @Header("Authorization") token: String,
+        @Body request: SubscriptionRequest
+    ): SubscriptionResponse
 }
 
 object BazingaApiClient {
