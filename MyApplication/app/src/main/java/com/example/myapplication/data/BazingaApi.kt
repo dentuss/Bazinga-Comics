@@ -8,7 +8,7 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 
-private const val BASE_URL = "http://10.0.2.2:8080"
+private const val BASE_URL = "http://13.60.79.86:8080"
 
 interface BazingaApi {
     @GET("/api/comics")
