@@ -1066,13 +1066,13 @@ private fun PurchaseTypeCard(
     title: String,
     subtitle: String,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val background = if (isSelected) BazingaSurfaceAlt else BazingaSurface
     val borderColor = if (isSelected) BazingaRed else BazingaSurfaceAlt
     Column(
         modifier = Modifier
-            .weight(1f)
             .clip(RoundedCornerShape(12.dp))
             .background(background)
             .clickable { onClick() }
