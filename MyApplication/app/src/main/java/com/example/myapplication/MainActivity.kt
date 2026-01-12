@@ -132,7 +132,7 @@ private sealed class Screen(val route: String, val label: String) {
 fun BazingaApp() {
     val navController = rememberNavController()
     val repository = remember { BazingaRepository(BazingaApiClient.api) }
-    var authState by rememberSaveable { mutableStateOf(AuthState()) }
+    var authState by remember { mutableStateOf(AuthState()) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -221,7 +221,7 @@ private fun HomeScreen(
 ) {
     var comicsState by remember { mutableStateOf<UiState<List<ComicDto>>>(UiState.Loading) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
-    var filterState by rememberSaveable { mutableStateOf(FilterState()) }
+    var filterState by remember { mutableStateOf(FilterState()) }
     var digitalOnly by rememberSaveable { mutableStateOf(false) }
     var selectedComic by remember { mutableStateOf<ComicDto?>(null) }
 
