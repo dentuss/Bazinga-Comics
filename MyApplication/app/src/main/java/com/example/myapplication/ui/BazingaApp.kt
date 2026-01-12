@@ -145,7 +145,8 @@ fun BazingaApp() {
                         cartState = UiState.Success(emptyList())
                         navController.navigate(Screen.Home.route)
                     },
-                    onNavigateToLibrary = { navController.navigate(Screen.Library.route) }
+                    onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
+                    onProfileUpdate = { updated -> authState = updated }
                 )
             }
             composable(Screen.Cart.route) {

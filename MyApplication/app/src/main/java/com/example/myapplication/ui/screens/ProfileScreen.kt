@@ -11,9 +11,17 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.ui.model.AuthState
@@ -25,8 +33,28 @@ import com.example.myapplication.ui.theme.BazingaTextMuted
 fun ProfileScreen(
     authState: AuthState,
     onSignOut: () -> Unit,
-    onNavigateToLibrary: () -> Unit
+    onNavigateToLibrary: () -> Unit,
+    onProfileUpdate: (AuthState) -> Unit
 ) {
+    var username by rememberSaveable { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }
+    var firstName by rememberSaveable { mutableStateOf("") }
+    var lastName by rememberSaveable { mutableStateOf("") }
+    var dateOfBirth by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
+    var feedbackMessage by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(authState) {
+        if (authState.token.isNotBlank()) {
+            username = authState.username
+            email = authState.email
+            firstName = authState.firstName
+            lastName = authState.lastName
+            dateOfBirth = authState.dateOfBirth
+            password = ""
+        }
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -74,6 +102,92 @@ fun ProfileScreen(
                                 color = BazingaTextMuted,
                                 fontSize = 11.sp
                             )
+                        }
+                    }
+                }
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = BazingaSurface
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(text = "Edit profile", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "Keep your Bazinga profile up to date.", color = BazingaTextMuted, fontSize = 12.sp)
+                        TextField(
+                            value = username,
+                            onValueChange = { username = it },
+                            label = { Text("Username") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        TextField(
+                            value = email,
+                            onValueChange = { email = it },
+                            label = { Text("Email") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        TextField(
+                            value = firstName,
+                            onValueChange = { firstName = it },
+                            label = { Text("First name") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        TextField(
+                            value = lastName,
+                            onValueChange = { lastName = it },
+                            label = { Text("Last name") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        TextField(
+                            value = dateOfBirth,
+                            onValueChange = { dateOfBirth = it },
+                            label = { Text("Date of birth") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        TextField(
+                            value = password,
+                            onValueChange = { password = it },
+                            label = { Text("Password") },
+                            modifier = Modifier.fillMaxWidth(),
+                            visualTransformation = PasswordVisualTransformation()
+                        )
+                        Button(
+                            onClick = {
+                                onProfileUpdate(
+                                    authState.copy(
+                                        username = username.trim(),
+                                        email = email.trim(),
+                                        firstName = firstName.trim(),
+                                        lastName = lastName.trim(),
+                                        dateOfBirth = dateOfBirth.trim()
+                                    )
+                                )
+                                password = ""
+                                feedbackMessage = "Profile details saved."
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Save changes")
+                        }
+                        Button(
+                            onClick = {
+                                username = authState.username
+                                email = authState.email
+                                firstName = authState.firstName
+                                lastName = authState.lastName
+                                dateOfBirth = authState.dateOfBirth
+                                password = ""
+                                feedbackMessage = "Changes reset."
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = BazingaSurfaceAlt)
+                        ) {
+                            Text("Reset")
+                        }
+                        feedbackMessage?.let { message ->
+                            Text(text = message, color = BazingaTextMuted, fontSize = 12.sp)
                         }
                     }
                 }
