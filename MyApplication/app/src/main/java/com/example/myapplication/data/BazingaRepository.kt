@@ -37,4 +37,69 @@ class BazingaRepository(private val api: BazingaApi) {
                 onSuccess = { UiState.Success(it) },
                 onFailure = { UiState.Error(it.message ?: "Unable to add to library") }
             )
+
+    suspend fun fetchCart(token: String): UiState<List<CartItemDto>> =
+        runCatching { api.getCart("Bearer $token") }
+            .fold(
+                onSuccess = { UiState.Success(it) },
+                onFailure = { UiState.Error(it.message ?: "Unable to load cart") }
+            )
+
+    suspend fun addToCart(
+        token: String,
+        comicId: Long,
+        purchaseType: String
+    ): UiState<List<CartItemDto>> =
+        runCatching {
+            api.addToCart(
+                "Bearer $token",
+                CartItemRequest(comicId = comicId, quantity = 1, purchaseType = purchaseType)
+            )
+        }.fold(
+            onSuccess = { UiState.Success(it) },
+            onFailure = { UiState.Error(it.message ?: "Unable to add to cart") }
+        )
+
+    suspend fun updateCartQuantity(
+        token: String,
+        cartItemId: Long,
+        quantity: Int
+    ): UiState<List<CartItemDto>> =
+        runCatching {
+            api.updateCart(
+                "Bearer $token",
+                CartItemRequest(cartItemId = cartItemId, quantity = quantity)
+            )
+        }.fold(
+            onSuccess = { UiState.Success(it) },
+            onFailure = { UiState.Error(it.message ?: "Unable to update cart") }
+        )
+
+    suspend fun removeCartItem(token: String, cartItemId: Long): UiState<List<CartItemDto>> =
+        runCatching { api.removeCartItem("Bearer $token", cartItemId) }
+            .fold(
+                onSuccess = { UiState.Success(it) },
+                onFailure = { UiState.Error(it.message ?: "Unable to remove item") }
+            )
+
+    suspend fun clearCart(token: String): UiState<List<CartItemDto>> =
+        runCatching { api.clearCart("Bearer $token") }
+            .fold(
+                onSuccess = { UiState.Success(it) },
+                onFailure = { UiState.Error(it.message ?: "Unable to clear cart") }
+            )
+
+    suspend fun fetchNews(): UiState<List<NewsPostDto>> =
+        runCatching { api.getNews() }
+            .fold(
+                onSuccess = { UiState.Success(it) },
+                onFailure = { UiState.Error(it.message ?: "Unable to load news") }
+            )
+
+    suspend fun postNews(token: String, title: String, content: String): UiState<NewsPostDto> =
+        runCatching { api.postNews("Bearer $token", NewsPostRequest(title, content)) }
+            .fold(
+                onSuccess = { UiState.Success(it) },
+                onFailure = { UiState.Error(it.message ?: "Unable to post news") }
+            )
 }

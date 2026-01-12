@@ -7,6 +7,9 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.PUT
+import retrofit2.http.DELETE
+import retrofit2.http.Path
 
 private const val BASE_URL = "http://13.60.79.86:8080"
 
@@ -28,6 +31,39 @@ interface BazingaApi {
         @Header("Authorization") token: String,
         @Body request: LibraryItemRequest
     ): List<LibraryItemDto>
+
+    @GET("/api/cart")
+    suspend fun getCart(@Header("Authorization") token: String): List<CartItemDto>
+
+    @POST("/api/cart")
+    suspend fun addToCart(
+        @Header("Authorization") token: String,
+        @Body request: CartItemRequest
+    ): List<CartItemDto>
+
+    @PUT("/api/cart")
+    suspend fun updateCart(
+        @Header("Authorization") token: String,
+        @Body request: CartItemRequest
+    ): List<CartItemDto>
+
+    @DELETE("/api/cart/{cartItemId}")
+    suspend fun removeCartItem(
+        @Header("Authorization") token: String,
+        @Path("cartItemId") cartItemId: Long
+    ): List<CartItemDto>
+
+    @DELETE("/api/cart")
+    suspend fun clearCart(@Header("Authorization") token: String): List<CartItemDto>
+
+    @GET("/api/news")
+    suspend fun getNews(): List<NewsPostDto>
+
+    @POST("/api/news")
+    suspend fun postNews(
+        @Header("Authorization") token: String,
+        @Body request: NewsPostRequest
+    ): NewsPostDto
 }
 
 object BazingaApiClient {
