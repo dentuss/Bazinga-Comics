@@ -42,3 +42,34 @@ data class AuthResponse(
 data class LibraryItemRequest(
     val comicId: Long
 )
+
+data class CartItemDto(
+    val id: Long,
+    val comic: ComicDto,
+    val quantity: Int,
+    val purchaseType: String,
+    val unitPrice: Double
+)
+
+data class CartItemRequest(
+    val cartItemId: Long? = null,
+    val comicId: Long? = null,
+    val quantity: Int? = null,
+    val purchaseType: String? = null
+)
+
+data class NewsPostDto(
+    val id: Long,
+    val title: String,
+    val content: String,
+    val authorId: Long,
+    val authorUsername: String,
+    val authorRole: String,
+    val createdAt: String,
+    val expiresAt: String
+)
+
+data class NewsPostRequest(
+    val title: String,
+    val content: String
+)

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,8 +25,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -72,8 +79,10 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.example.myapplication.data.BazingaApiClient
 import com.example.myapplication.data.BazingaRepository
+import com.example.myapplication.data.CartItemDto
 import com.example.myapplication.data.ComicDto
 import com.example.myapplication.data.LibraryItemDto
+import com.example.myapplication.data.NewsPostDto
 import com.example.myapplication.data.resolveImageUrl
 import com.example.myapplication.ui.UiState
 import com.example.myapplication.ui.theme.BazingaMuted
@@ -83,7 +92,9 @@ import com.example.myapplication.ui.theme.BazingaSurfaceAlt
 import com.example.myapplication.ui.theme.BazingaTextMuted
 import com.example.myapplication.ui.theme.MyApplicationTheme
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.time.ZoneId
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -101,7 +112,10 @@ class MainActivity : ComponentActivity() {
 private data class AuthState(
     val token: String = "",
     val username: String = "",
-    val email: String = ""
+    val email: String = "",
+    val role: String = "",
+    val subscriptionType: String? = null,
+    val subscriptionExpiration: String? = null
 )
 
 private data class FilterState(
@@ -121,8 +135,12 @@ private data class ComicViewData(
 )
 
 private sealed class Screen(val route: String, val label: String) {
-    object Home : Screen("home", "Home")
+    object Home : Screen("home", "Main")
     object Library : Screen("library", "Library")
+    object Profile : Screen("profile", "Profile")
+    object Cart : Screen("cart", "Cart")
+    object News : Screen("news", "News")
+    object Checkout : Screen("checkout", "Checkout")
     object Reader : Screen("reader/{id}", "Reader") {
         fun createRoute(id: Long) = "reader/$id"
     }
@@ -133,8 +151,17 @@ fun BazingaApp() {
     val navController = rememberNavController()
     val repository = remember { BazingaRepository(BazingaApiClient.api) }
     var authState by remember { mutableStateOf(AuthState()) }
+    var cartState by remember { mutableStateOf<UiState<List<CartItemDto>>>(UiState.Success(emptyList())) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(authState.token) {
+        cartState = if (authState.token.isNotBlank()) {
+            repository.fetchCart(authState.token)
+        } else {
+            UiState.Success(emptyList())
+        }
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -146,13 +173,31 @@ fun BazingaApp() {
                         selected = currentRoute == Screen.Home.route,
                         onClick = { navController.navigate(Screen.Home.route) },
                         icon = { Icon(Icons.Filled.Home, contentDescription = "Home") },
-                        label = { Text("Home") }
+                        label = { Text(Screen.Home.label) }
                     )
                     NavigationBarItem(
                         selected = currentRoute == Screen.Library.route,
                         onClick = { navController.navigate(Screen.Library.route) },
                         icon = { Icon(Icons.Filled.Book, contentDescription = "Library") },
-                        label = { Text("Library") }
+                        label = { Text(Screen.Library.label) }
+                    )
+                    NavigationBarItem(
+                        selected = currentRoute == Screen.Profile.route,
+                        onClick = { navController.navigate(Screen.Profile.route) },
+                        icon = { Icon(Icons.Filled.Person, contentDescription = "Profile") },
+                        label = { Text(Screen.Profile.label) }
+                    )
+                    NavigationBarItem(
+                        selected = currentRoute == Screen.Cart.route,
+                        onClick = { navController.navigate(Screen.Cart.route) },
+                        icon = { Icon(Icons.Filled.ShoppingCart, contentDescription = "Cart") },
+                        label = { Text(Screen.Cart.label) }
+                    )
+                    NavigationBarItem(
+                        selected = currentRoute == Screen.News.route,
+                        onClick = { navController.navigate(Screen.News.route) },
+                        icon = { Icon(Icons.Filled.Article, contentDescription = "News") },
+                        label = { Text(Screen.News.label) }
                     )
                 }
             }
@@ -167,25 +212,25 @@ fun BazingaApp() {
                 HomeScreen(
                     repository = repository,
                     authState = authState,
-                    onAddToLibrary = { comic ->
+                    onAddToCart = { comic, purchaseType ->
                         if (authState.token.isBlank()) {
                             scope.launch {
-                                snackbarHostState.showSnackbar("Sign in to add digital comics to your library.")
+                                snackbarHostState.showSnackbar("Sign in to add items to your cart.")
                             }
                         } else {
                             scope.launch {
-                                when (val result = repository.addToLibrary(authState.token, comic.id)) {
-                                    is UiState.Success ->
-                                        snackbarHostState.showSnackbar("Added to your library!")
-                                    is UiState.Error ->
-                                        snackbarHostState.showSnackbar(result.message)
+                                when (val result = repository.addToCart(authState.token, comic.id, purchaseType)) {
+                                    is UiState.Success -> {
+                                        cartState = result
+                                        snackbarHostState.showSnackbar("Added to cart!")
+                                    }
+                                    is UiState.Error -> snackbarHostState.showSnackbar(result.message)
                                     UiState.Loading -> Unit
                                 }
                             }
                         }
                     },
-                    onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
-                    onReadComic = { comicId -> navController.navigate(Screen.Reader.createRoute(comicId)) }
+                    onNavigateToLibrary = { navController.navigate(Screen.Library.route) }
                 )
             }
             composable(Screen.Library.route) {
@@ -194,6 +239,75 @@ fun BazingaApp() {
                     authState = authState,
                     onAuthStateChange = { authState = it },
                     onReadComic = { comicId -> navController.navigate(Screen.Reader.createRoute(comicId)) }
+                )
+            }
+            composable(Screen.Profile.route) {
+                ProfileScreen(
+                    authState = authState,
+                    onSignOut = {
+                        authState = AuthState()
+                        cartState = UiState.Success(emptyList())
+                        navController.navigate(Screen.Home.route)
+                    },
+                    onNavigateToLibrary = { navController.navigate(Screen.Library.route) }
+                )
+            }
+            composable(Screen.Cart.route) {
+                CartScreen(
+                    authState = authState,
+                    cartState = cartState,
+                    onNavigateHome = { navController.navigate(Screen.Home.route) },
+                    onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
+                    onCheckout = { navController.navigate(Screen.Checkout.route) },
+                    onRefreshCart = {
+                        if (authState.token.isNotBlank()) {
+                            scope.launch {
+                                cartState = repository.fetchCart(authState.token)
+                            }
+                        }
+                    },
+                    onUpdateQuantity = { itemId, quantity ->
+                        if (authState.token.isNotBlank()) {
+                            scope.launch {
+                                cartState = repository.updateCartQuantity(authState.token, itemId, quantity)
+                            }
+                        }
+                    },
+                    onRemoveItem = { itemId ->
+                        if (authState.token.isNotBlank()) {
+                            scope.launch {
+                                cartState = repository.removeCartItem(authState.token, itemId)
+                            }
+                        }
+                    }
+                )
+            }
+            composable(Screen.News.route) {
+                NewsScreen(
+                    repository = repository,
+                    authState = authState
+                )
+            }
+            composable(Screen.Checkout.route) {
+                CheckoutScreen(
+                    repository = repository,
+                    authState = authState,
+                    cartState = cartState,
+                    onBackToCart = { navController.navigate(Screen.Cart.route) },
+                    onOrderComplete = {
+                        scope.launch {
+                            cartState = UiState.Success(emptyList())
+                            snackbarHostState.showSnackbar("Order placed successfully!")
+                            navController.navigate(Screen.Home.route)
+                        }
+                    },
+                    onClearCart = {
+                        if (authState.token.isNotBlank()) {
+                            scope.launch {
+                                cartState = repository.clearCart(authState.token)
+                            }
+                        }
+                    }
                 )
             }
             composable(
@@ -215,9 +329,8 @@ fun BazingaApp() {
 private fun HomeScreen(
     repository: BazingaRepository,
     authState: AuthState,
-    onAddToLibrary: (ComicDto) -> Unit,
-    onNavigateToLibrary: () -> Unit,
-    onReadComic: (Long) -> Unit
+    onAddToCart: (ComicDto, String) -> Unit,
+    onNavigateToLibrary: () -> Unit
 ) {
     var comicsState by remember { mutableStateOf<UiState<List<ComicDto>>>(UiState.Loading) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
@@ -362,12 +475,8 @@ private fun HomeScreen(
             comic = selectedComic!!,
             authState = authState,
             onDismiss = { selectedComic = null },
-            onAddToLibrary = {
-                onAddToLibrary(selectedComic!!)
-                selectedComic = null
-            },
-            onReadNow = {
-                onReadComic(selectedComic!!.id)
+            onAddToCart = { purchaseType ->
+                onAddToCart(selectedComic!!, purchaseType)
                 selectedComic = null
             }
         )
@@ -862,9 +971,22 @@ private fun ComicDetailDialog(
     comic: ComicDto,
     authState: AuthState,
     onDismiss: () -> Unit,
-    onAddToLibrary: () -> Unit,
-    onReadNow: () -> Unit
+    onAddToCart: (String) -> Unit
 ) {
+    val price = comic.price ?: 4.99
+    val isDigitalExclusive = comic.comicType == "ONLY_DIGITAL"
+    val subscriptionType = authState.subscriptionType?.lowercase()
+    val isUnlimited = subscriptionType == "unlimited"
+    val originalPrice = if (isUnlimited) price * 0.5 else price
+    val digitalPrice = if (isUnlimited) 0.0 else price * 0.75
+    var purchaseType by remember { mutableStateOf(if (isDigitalExclusive) "DIGITAL" else "ORIGINAL") }
+
+    LaunchedEffect(comic.id) {
+        purchaseType = if (isDigitalExclusive) "DIGITAL" else "ORIGINAL"
+    }
+
+    val selectedPrice = if (purchaseType == "DIGITAL") digitalPrice else originalPrice
+
     AlertDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -891,7 +1013,7 @@ private fun ComicDetailDialog(
                     fontSize = 13.sp,
                     modifier = Modifier.padding(top = 8.dp)
                 )
-                if (comic.comicType == "ONLY_DIGITAL") {
+                if (isDigitalExclusive) {
                     Text(
                         text = "Digital Exclusive",
                         fontWeight = FontWeight.Bold,
@@ -899,33 +1021,693 @@ private fun ComicDetailDialog(
                         modifier = Modifier.padding(top = 8.dp)
                     )
                 }
+                Spacer(modifier = Modifier.height(12.dp))
+                if (!isDigitalExclusive) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        PurchaseTypeCard(
+                            title = "Original Copy",
+                            subtitle = if (originalPrice == 0.0) "FREE WITH UNLIMITED" else "$${"%.2f".format(originalPrice)}",
+                            isSelected = purchaseType == "ORIGINAL",
+                            onClick = { purchaseType = "ORIGINAL" }
+                        )
+                        PurchaseTypeCard(
+                            title = "Digital Copy",
+                            subtitle = if (digitalPrice == 0.0) "FREE WITH UNLIMITED" else "$${"%.2f".format(digitalPrice)}",
+                            isSelected = purchaseType == "DIGITAL",
+                            onClick = { purchaseType = "DIGITAL" }
+                        )
+                    }
+                }
             }
         },
         confirmButton = {
-            if (comic.comicType == "ONLY_DIGITAL") {
-                if (authState.token.isBlank()) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Sign in to add")
-                    }
-                } else {
-                    TextButton(onClick = onAddToLibrary) {
-                        Text("Add to library")
-                    }
+            if (authState.token.isBlank()) {
+                TextButton(onClick = onDismiss) {
+                    Text("Sign in to buy")
+                }
+            } else {
+                TextButton(onClick = { onAddToCart(purchaseType) }) {
+                    Text(
+                        text = if (selectedPrice == 0.0) "Add to cart - Free" else "Add to cart - $${"%.2f".format(selectedPrice)}"
+                    )
                 }
             }
         },
         dismissButton = {
-            if (comic.comicType == "ONLY_DIGITAL" && authState.token.isNotBlank()) {
-                TextButton(onClick = onReadNow) {
-                    Text("Read now")
-                }
-            } else {
-                TextButton(onClick = onDismiss) {
-                    Text("Close")
-                }
+            TextButton(onClick = onDismiss) {
+                Text("Close")
             }
         }
     )
+}
+
+@Composable
+private fun PurchaseTypeCard(
+    title: String,
+    subtitle: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    val background = if (isSelected) BazingaSurfaceAlt else BazingaSurface
+    val borderColor = if (isSelected) BazingaRed else BazingaSurfaceAlt
+    Column(
+        modifier = Modifier
+            .weight(1f)
+            .clip(RoundedCornerShape(12.dp))
+            .background(background)
+            .clickable { onClick() }
+            .padding(12.dp)
+    ) {
+        Text(text = title, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        Text(text = subtitle, fontSize = 11.sp, color = BazingaTextMuted)
+        Spacer(modifier = Modifier.height(4.dp))
+        Box(
+            modifier = Modifier
+                .height(2.dp)
+                .fillMaxWidth()
+                .background(borderColor)
+        )
+    }
+}
+
+@Composable
+private fun ProfileScreen(
+    authState: AuthState,
+    onSignOut: () -> Unit,
+    onNavigateToLibrary: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Profile",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Black
+            )
+            if (authState.token.isBlank()) {
+                Text(
+                    text = "Sign in to view and manage your Bazinga profile.",
+                    color = BazingaTextMuted
+                )
+                Button(onClick = onNavigateToLibrary, modifier = Modifier.fillMaxWidth()) {
+                    Text("Go to Sign In")
+                }
+            } else {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = BazingaSurface
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(text = authState.username, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text(text = authState.email, color = BazingaTextMuted, fontSize = 12.sp)
+                        Text(text = "Role: ${authState.role.ifBlank { "USER" }}", color = BazingaTextMuted, fontSize = 12.sp)
+                        Text(
+                            text = "Subscription: ${authState.subscriptionType ?: "Free"}",
+                            color = BazingaTextMuted,
+                            fontSize = 12.sp
+                        )
+                        authState.subscriptionExpiration?.let { expiration ->
+                            Text(
+                                text = "Renews on $expiration",
+                                color = BazingaTextMuted,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
+                Button(
+                    onClick = onSignOut,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = BazingaSurfaceAlt)
+                ) {
+                    Text("Sign out")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CartScreen(
+    authState: AuthState,
+    cartState: UiState<List<CartItemDto>>,
+    onNavigateHome: () -> Unit,
+    onNavigateToLibrary: () -> Unit,
+    onCheckout: () -> Unit,
+    onRefreshCart: () -> Unit,
+    onUpdateQuantity: (Long, Int) -> Unit,
+    onRemoveItem: (Long) -> Unit
+) {
+    val items = (cartState as? UiState.Success)?.data.orEmpty()
+    val totalItems = items.sumOf { it.quantity }
+    val totalPrice = items.sumOf { it.unitPrice * it.quantity }
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "Your Cart", fontSize = 24.sp, fontWeight = FontWeight.Black)
+                TextButton(onClick = onRefreshCart) {
+                    Text("Refresh")
+                }
+            }
+            if (authState.token.isBlank()) {
+                Text(
+                    text = "Sign in to manage your cart and checkout.",
+                    color = BazingaTextMuted
+                )
+                Button(onClick = onNavigateToLibrary, modifier = Modifier.fillMaxWidth()) {
+                    Text("Sign in")
+                }
+            } else {
+                when (cartState) {
+                    UiState.Loading -> LoadingState(message = "Loading cart...")
+                    is UiState.Error -> ErrorState(message = (cartState as UiState.Error).message)
+                    is UiState.Success -> {
+                        if (items.isEmpty()) {
+                            Text(text = "Your cart is empty.", color = BazingaTextMuted)
+                            Button(onClick = onNavigateHome, modifier = Modifier.fillMaxWidth()) {
+                                Text("Continue shopping")
+                            }
+                        } else {
+                            LazyColumn(
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                items(items) { item ->
+                                    CartItemRow(
+                                        item = item,
+                                        onIncrease = { onUpdateQuantity(item.id, item.quantity + 1) },
+                                        onDecrease = { onUpdateQuantity(item.id, item.quantity - 1) },
+                                        onRemove = { onRemoveItem(item.id) }
+                                    )
+                                }
+                            }
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                color = BazingaSurface
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(text = "Items")
+                                        Text(text = totalItems.toString())
+                                    }
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(text = "Total")
+                                        Text(text = formatPrice(totalPrice), fontWeight = FontWeight.Bold)
+                                    }
+                                    Button(onClick = onCheckout, modifier = Modifier.fillMaxWidth()) {
+                                        Text("Proceed to Checkout")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CartItemRow(
+    item: CartItemDto,
+    onIncrease: () -> Unit,
+    onDecrease: () -> Unit,
+    onRemove: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = BazingaSurface
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val image = resolveImageUrl(item.comic.image)
+            Box(
+                modifier = Modifier
+                    .height(100.dp)
+                    .width(70.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(BazingaSurfaceAlt)
+            ) {
+                if (image != null) {
+                    AsyncImage(
+                        model = image,
+                        contentDescription = item.comic.title,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = item.comic.title, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(text = item.comic.author ?: "Bazinga Studios", fontSize = 11.sp, color = BazingaTextMuted)
+                Text(
+                    text = if (item.purchaseType == "DIGITAL") "Digital Copy" else "Original Copy",
+                    fontSize = 11.sp,
+                    color = BazingaTextMuted
+                )
+                Text(
+                    text = formatPrice(item.unitPrice * item.quantity),
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 6.dp)
+                )
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(onClick = onIncrease) {
+                    Icon(Icons.Filled.Add, contentDescription = "Increase quantity")
+                }
+                Text(text = item.quantity.toString(), fontWeight = FontWeight.Bold)
+                IconButton(onClick = onDecrease) {
+                    Icon(Icons.Filled.Remove, contentDescription = "Decrease quantity")
+                }
+            }
+            IconButton(onClick = onRemove) {
+                Icon(Icons.Filled.Delete, contentDescription = "Remove item", tint = BazingaRed)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CheckoutScreen(
+    repository: BazingaRepository,
+    authState: AuthState,
+    cartState: UiState<List<CartItemDto>>,
+    onBackToCart: () -> Unit,
+    onOrderComplete: () -> Unit,
+    onClearCart: () -> Unit
+) {
+    val items = (cartState as? UiState.Success)?.data.orEmpty()
+    val totalPrice = items.sumOf { it.unitPrice * it.quantity }
+    var firstName by rememberSaveable { mutableStateOf("") }
+    var lastName by rememberSaveable { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf(authState.email) }
+    var address by rememberSaveable { mutableStateOf("") }
+    var city by rememberSaveable { mutableStateOf("") }
+    var zip by rememberSaveable { mutableStateOf("") }
+    var cardNumber by rememberSaveable { mutableStateOf("") }
+    var expiry by rememberSaveable { mutableStateOf("") }
+    var cvv by rememberSaveable { mutableStateOf("") }
+    var isProcessing by rememberSaveable { mutableStateOf(false) }
+    var orderComplete by rememberSaveable { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    if (authState.token.isBlank()) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(text = "Checkout", fontSize = 24.sp, fontWeight = FontWeight.Black)
+                Text(text = "Sign in to complete your purchase.", color = BazingaTextMuted)
+                Button(onClick = onBackToCart, modifier = Modifier.fillMaxWidth()) {
+                    Text("Back to cart")
+                }
+            }
+        }
+        return
+    }
+
+    if (items.isEmpty() && !orderComplete) {
+        LaunchedEffect(Unit) {
+            onBackToCart()
+        }
+        return
+    }
+
+    if (orderComplete) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(text = "Order Complete!", fontSize = 24.sp, fontWeight = FontWeight.Black)
+                Text(
+                    text = "Thank you for your purchase. Your comics will be delivered soon.",
+                    color = BazingaTextMuted
+                )
+                Button(onClick = onOrderComplete, modifier = Modifier.fillMaxWidth()) {
+                    Text("Continue shopping")
+                }
+            }
+        }
+        return
+    }
+
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .imePadding(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                Text(text = "Checkout", fontSize = 24.sp, fontWeight = FontWeight.Black)
+            }
+            item {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = BazingaSurface
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(text = "Shipping information", fontWeight = FontWeight.Bold)
+                        TextField(
+                            value = firstName,
+                            onValueChange = { firstName = it },
+                            label = { Text("First name") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        TextField(
+                            value = lastName,
+                            onValueChange = { lastName = it },
+                            label = { Text("Last name") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        TextField(
+                            value = email,
+                            onValueChange = { email = it },
+                            label = { Text("Email") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        TextField(
+                            value = address,
+                            onValueChange = { address = it },
+                            label = { Text("Address") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        TextField(
+                            value = city,
+                            onValueChange = { city = it },
+                            label = { Text("City") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        TextField(
+                            value = zip,
+                            onValueChange = { zip = it },
+                            label = { Text("ZIP code") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+            item {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = BazingaSurface
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(text = "Payment details", fontWeight = FontWeight.Bold)
+                        TextField(
+                            value = cardNumber,
+                            onValueChange = { cardNumber = it },
+                            label = { Text("Card number") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            TextField(
+                                value = expiry,
+                                onValueChange = { expiry = it },
+                                label = { Text("Expiry") },
+                                modifier = Modifier.weight(1f)
+                            )
+                            TextField(
+                                value = cvv,
+                                onValueChange = { cvv = it },
+                                label = { Text("CVV") },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+            }
+            item {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = BazingaSurface
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(text = "Order summary", fontWeight = FontWeight.Bold)
+                        items.forEach { item ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(text = item.comic.title, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(
+                                        text = "${if (item.purchaseType == "DIGITAL") "Digital" else "Original"} · Qty ${item.quantity}",
+                                        fontSize = 11.sp,
+                                        color = BazingaTextMuted
+                                    )
+                                }
+                                Text(text = formatPrice(item.unitPrice * item.quantity))
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(text = "Total", fontWeight = FontWeight.Bold)
+                            Text(text = formatPrice(totalPrice), fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+            item {
+                Button(
+                    onClick = {
+                        if (isProcessing) return@Button
+                        isProcessing = true
+                        scope.launch {
+                            delay(2000)
+                            val digitalItems = items.filter { it.purchaseType == "DIGITAL" }
+                            digitalItems.forEach { item ->
+                                repository.addToLibrary(authState.token, item.comic.id)
+                            }
+                            onClearCart()
+                            isProcessing = false
+                            orderComplete = true
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isProcessing
+                ) {
+                    Text(text = if (isProcessing) "Processing..." else "Pay ${formatPrice(totalPrice)}")
+                }
+                TextButton(onClick = onBackToCart, modifier = Modifier.fillMaxWidth()) {
+                    Text("Back to cart")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NewsScreen(
+    repository: BazingaRepository,
+    authState: AuthState
+) {
+    var newsState by remember { mutableStateOf<UiState<List<NewsPostDto>>>(UiState.Loading) }
+    var title by rememberSaveable { mutableStateOf("") }
+    var content by rememberSaveable { mutableStateOf("") }
+    var isSubmitting by rememberSaveable { mutableStateOf(false) }
+    val canPost = authState.role == "ADMIN" || authState.role == "EDITOR"
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        newsState = repository.fetchNews()
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(text = "Bazinga Newsroom", fontSize = 12.sp, color = BazingaRed, fontWeight = FontWeight.Bold)
+                    Text(text = "Latest community news", fontSize = 24.sp, fontWeight = FontWeight.Black)
+                    Text(
+                        text = "Updates from Bazinga editors and administrators. Posts stay live for seven days.",
+                        color = BazingaTextMuted
+                    )
+                }
+            }
+            if (canPost) {
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = BazingaSurface
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(text = "Create a news post", fontWeight = FontWeight.Bold)
+                            TextField(
+                                value = title,
+                                onValueChange = { title = it },
+                                label = { Text("Title") },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            TextField(
+                                value = content,
+                                onValueChange = { content = it },
+                                label = { Text("Details") },
+                                modifier = Modifier.fillMaxWidth(),
+                                minLines = 4
+                            )
+                            Button(
+                                onClick = {
+                                    if (authState.token.isBlank()) return@Button
+                                    isSubmitting = true
+                                    scope.launch {
+                                        when (val result = repository.postNews(authState.token, title, content)) {
+                                            is UiState.Success -> {
+                                                title = ""
+                                                content = ""
+                                                newsState = repository.fetchNews()
+                                            }
+                                            is UiState.Error -> Unit
+                                            UiState.Loading -> Unit
+                                        }
+                                        isSubmitting = false
+                                    }
+                                },
+                                enabled = !isSubmitting
+                            ) {
+                                Text(text = if (isSubmitting) "Posting..." else "Post news")
+                            }
+                        }
+                    }
+                }
+            }
+            item {
+                when (newsState) {
+                    UiState.Loading -> LoadingState(message = "Loading news...")
+                    is UiState.Error -> ErrorState(message = (newsState as UiState.Error).message)
+                    is UiState.Success -> Unit
+                }
+            }
+            if (newsState is UiState.Success) {
+                val posts = (newsState as UiState.Success<List<NewsPostDto>>).data
+                if (posts.isEmpty()) {
+                    item {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            color = BazingaSurface
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(text = "No news yet", fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = "Check back later for updates from the team.",
+                                    color = BazingaTextMuted
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    items(posts) { post ->
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            color = BazingaSurface
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(text = post.title, fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = "Posted by ${post.authorUsername} (${post.authorRole}) · ${formatNewsDate(post.createdAt)} · Expires ${formatNewsDate(post.expiresAt)}",
+                                    fontSize = 11.sp,
+                                    color = BazingaTextMuted
+                                )
+                                Text(text = post.content, fontSize = 13.sp)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -1006,7 +1788,10 @@ private fun LibraryScreen(
                                                 AuthState(
                                                     token = result.data.token,
                                                     username = result.data.username,
-                                                    email = result.data.email
+                                                    email = result.data.email,
+                                                    role = result.data.role,
+                                                    subscriptionType = result.data.subscriptionType,
+                                                    subscriptionExpiration = result.data.subscriptionExpiration
                                                 )
                                             )
                                             authMessage = null
@@ -1020,15 +1805,18 @@ private fun LibraryScreen(
                             scope.launch {
                                 when (val result = repository.login(email.trim(), password)) {
                                     is UiState.Success -> {
-                                        onAuthStateChange(
-                                            AuthState(
-                                                token = result.data.token,
-                                                username = result.data.username,
-                                                email = result.data.email
-                                            )
+                                    onAuthStateChange(
+                                        AuthState(
+                                            token = result.data.token,
+                                            username = result.data.username,
+                                            email = result.data.email,
+                                            role = result.data.role,
+                                            subscriptionType = result.data.subscriptionType,
+                                            subscriptionExpiration = result.data.subscriptionExpiration
                                         )
-                                        authMessage = null
-                                    }
+                                    )
+                                    authMessage = null
+                                }
                                     is UiState.Error -> authMessage = result.message
                                     UiState.Loading -> Unit
                                 }
@@ -1249,4 +2037,14 @@ private fun parseInstant(dateString: String?): Long {
     return runCatching {
         LocalDateTime.parse(dateString).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
     }.getOrDefault(0L)
+}
+
+private fun formatPrice(amount: Double): String {
+    return "$" + "%.2f".format(amount)
+}
+
+private fun formatNewsDate(dateString: String): String {
+    return runCatching {
+        LocalDateTime.parse(dateString).format(DateTimeFormatter.ofPattern("MMM d, yyyy"))
+    }.getOrDefault(dateString)
 }
