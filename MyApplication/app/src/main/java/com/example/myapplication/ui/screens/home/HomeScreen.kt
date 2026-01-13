@@ -22,6 +22,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -74,8 +76,11 @@ fun HomeScreen(
     repository: BazingaRepository,
     authState: AuthState,
     onAddToCart: (ComicDto, String) -> Unit,
-    onNavigateToLibrary: () -> Unit,
-    onNavigateToSubscription: () -> Unit
+    onNavigateToSubscription: () -> Unit,
+    onNavigateToWishlist: () -> Unit,
+    wishlistComicIds: Set<Long>,
+    onAddToWishlist: (Long) -> Unit,
+    onRemoveFromWishlist: (Long) -> Unit
 ) {
     var comicsState by remember { mutableStateOf<UiState<List<ComicDto>>>(UiState.Loading) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
@@ -164,7 +169,7 @@ fun HomeScreen(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            item { BazingaHeader(onLibraryClick = onNavigateToLibrary) }
+            item { BazingaHeader(onWishlistClick = onNavigateToWishlist) }
             item { HeroBanner(onSubscribeClick = onNavigateToSubscription) }
             item { SearchBar(searchQuery = searchQuery, onSearchChange = { searchQuery = it }) }
             item {
@@ -257,6 +262,15 @@ fun HomeScreen(
             onAddToCart = { purchaseType ->
                 onAddToCart(selectedComic!!, purchaseType)
                 selectedComic = null
+            },
+            isInWishlist = wishlistComicIds.contains(selectedComic!!.id),
+            onToggleWishlist = {
+                val comicId = selectedComic!!.id
+                if (wishlistComicIds.contains(comicId)) {
+                    onRemoveFromWishlist(comicId)
+                } else {
+                    onAddToWishlist(comicId)
+                }
             }
         )
     }
@@ -430,7 +444,7 @@ private fun FilteredResults(
 }
 
 @Composable
-private fun BazingaHeader(onLibraryClick: () -> Unit) {
+private fun BazingaHeader(onWishlistClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -445,10 +459,10 @@ private fun BazingaHeader(onLibraryClick: () -> Unit) {
             letterSpacing = (-1).sp,
             fontSize = 22.sp
         )
-        IconButton(onClick = onLibraryClick) {
+        IconButton(onClick = onWishlistClick) {
             Icon(
-                imageVector = Icons.Filled.Book,
-                contentDescription = "Library",
+                imageVector = Icons.Filled.Favorite,
+                contentDescription = "Wishlist",
                 tint = MaterialTheme.colorScheme.onBackground
             )
         }
@@ -759,7 +773,9 @@ private fun ComicDetailDialog(
     comic: ComicDto,
     authState: AuthState,
     onDismiss: () -> Unit,
-    onAddToCart: (String) -> Unit
+    onAddToCart: (String) -> Unit,
+    isInWishlist: Boolean,
+    onToggleWishlist: () -> Unit
 ) {
     val price = comic.price ?: 4.99
     val isDigitalExclusive = comic.comicType == "ONLY_DIGITAL"
@@ -830,6 +846,20 @@ private fun ComicDetailDialog(
                             modifier = Modifier.weight(1f)
                         )
                     }
+                }
+                TextButton(
+                    onClick = onToggleWishlist,
+                    enabled = authState.token.isNotBlank(),
+                    modifier = Modifier.padding(top = 12.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isInWishlist) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                        contentDescription = "Wishlist"
+                    )
+                    Text(
+                        text = if (isInWishlist) "Remove from wishlist" else "Add to wishlist",
+                        modifier = Modifier.padding(start = 6.dp)
+                    )
                 }
             }
         },
