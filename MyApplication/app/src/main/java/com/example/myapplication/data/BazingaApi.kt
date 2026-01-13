@@ -56,6 +56,21 @@ interface BazingaApi {
     @DELETE("/api/cart")
     suspend fun clearCart(@Header("Authorization") token: String): List<CartItemDto>
 
+    @GET("/api/wishlist")
+    suspend fun getWishlist(@Header("Authorization") token: String): List<WishlistItemDto>
+
+    @POST("/api/wishlist")
+    suspend fun addToWishlist(
+        @Header("Authorization") token: String,
+        @Body request: WishlistItemRequest
+    ): List<WishlistItemDto>
+
+    @DELETE("/api/wishlist/{comicId}")
+    suspend fun removeFromWishlist(
+        @Header("Authorization") token: String,
+        @Path("comicId") comicId: Long
+    ): List<WishlistItemDto>
+
     @GET("/api/news")
     suspend fun getNews(): List<NewsPostDto>
 

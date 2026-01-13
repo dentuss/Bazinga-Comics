@@ -31,6 +31,7 @@ import androidx.navigation.navArgument
 import com.example.myapplication.data.BazingaApiClient
 import com.example.myapplication.data.BazingaRepository
 import com.example.myapplication.data.CartItemDto
+import com.example.myapplication.data.WishlistItemDto
 import com.example.myapplication.ui.model.AuthState
 import com.example.myapplication.ui.navigation.Screen
 import com.example.myapplication.ui.screens.CartScreen
@@ -39,6 +40,7 @@ import com.example.myapplication.ui.screens.NewsScreen
 import com.example.myapplication.ui.screens.ProfileScreen
 import com.example.myapplication.ui.screens.ReaderScreen
 import com.example.myapplication.ui.screens.SubscriptionScreen
+import com.example.myapplication.ui.screens.WishlistScreen
 import com.example.myapplication.ui.screens.home.HomeScreen
 import com.example.myapplication.ui.screens.LibraryScreen
 import kotlinx.coroutines.launch
@@ -49,12 +51,21 @@ fun BazingaApp() {
     val repository = remember { BazingaRepository(BazingaApiClient.api) }
     var authState by remember { mutableStateOf(AuthState()) }
     var cartState by remember { mutableStateOf<UiState<List<CartItemDto>>>(UiState.Success(emptyList())) }
+    var wishlistState by remember { mutableStateOf<UiState<List<WishlistItemDto>>>(UiState.Success(emptyList())) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(authState.token) {
         cartState = if (authState.token.isNotBlank()) {
             repository.fetchCart(authState.token)
+        } else {
+            UiState.Success(emptyList())
+        }
+    }
+
+    LaunchedEffect(authState.token) {
+        wishlistState = if (authState.token.isNotBlank()) {
+            repository.fetchWishlist(authState.token)
         } else {
             UiState.Success(emptyList())
         }
@@ -79,12 +90,6 @@ fun BazingaApp() {
                         label = { Text(Screen.Library.label) }
                     )
                     NavigationBarItem(
-                        selected = currentRoute == Screen.Profile.route,
-                        onClick = { navController.navigate(Screen.Profile.route) },
-                        icon = { Icon(Icons.Filled.Person, contentDescription = "Profile") },
-                        label = { Text(Screen.Profile.label) }
-                    )
-                    NavigationBarItem(
                         selected = currentRoute == Screen.Cart.route,
                         onClick = { navController.navigate(Screen.Cart.route) },
                         icon = { Icon(Icons.Filled.ShoppingCart, contentDescription = "Cart") },
@@ -95,6 +100,12 @@ fun BazingaApp() {
                         onClick = { navController.navigate(Screen.News.route) },
                         icon = { Icon(Icons.Filled.Article, contentDescription = "News") },
                         label = { Text(Screen.News.label) }
+                    )
+                    NavigationBarItem(
+                        selected = currentRoute == Screen.Profile.route,
+                        onClick = { navController.navigate(Screen.Profile.route) },
+                        icon = { Icon(Icons.Filled.Person, contentDescription = "Profile") },
+                        label = { Text(Screen.Profile.label) }
                     )
                 }
             }
@@ -127,7 +138,6 @@ fun BazingaApp() {
                             }
                         }
                     },
-                    onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
                     onNavigateToSubscription = {
                         if (authState.token.isBlank()) {
                             scope.launch {
@@ -136,6 +146,36 @@ fun BazingaApp() {
                             navController.navigate(Screen.Library.route)
                         } else {
                             navController.navigate(Screen.Subscription.route)
+                        }
+                    },
+                    onNavigateToWishlist = { navController.navigate(Screen.Wishlist.route) },
+                    wishlistComicIds = (wishlistState as? UiState.Success)
+                        ?.data
+                        ?.map { it.comic.id }
+                        ?.toSet()
+                        ?: emptySet(),
+                    onAddToWishlist = { comicId ->
+                        if (authState.token.isBlank()) {
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Sign in to save to wishlist.")
+                            }
+                        } else {
+                            scope.launch {
+                                wishlistState = repository.addToWishlist(authState.token, comicId)
+                                if (wishlistState is UiState.Success) {
+                                    snackbarHostState.showSnackbar("Added to wishlist!")
+                                }
+                            }
+                        }
+                    },
+                    onRemoveFromWishlist = { comicId ->
+                        if (authState.token.isNotBlank()) {
+                            scope.launch {
+                                wishlistState = repository.removeFromWishlist(authState.token, comicId)
+                                if (wishlistState is UiState.Success) {
+                                    snackbarHostState.showSnackbar("Removed from wishlist.")
+                                }
+                            }
                         }
                     }
                 )
@@ -154,6 +194,7 @@ fun BazingaApp() {
                     onSignOut = {
                         authState = AuthState()
                         cartState = UiState.Success(emptyList())
+                        wishlistState = UiState.Success(emptyList())
                         navController.navigate(Screen.Home.route)
                     },
                     onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
@@ -185,6 +226,43 @@ fun BazingaApp() {
                         if (authState.token.isNotBlank()) {
                             scope.launch {
                                 cartState = repository.removeCartItem(authState.token, itemId)
+                            }
+                        }
+                    }
+                )
+            }
+            composable(Screen.Wishlist.route) {
+                WishlistScreen(
+                    authState = authState,
+                    wishlistState = wishlistState,
+                    onNavigateHome = { navController.navigate(Screen.Home.route) },
+                    onNavigateToLibrary = { navController.navigate(Screen.Library.route) },
+                    onRefreshWishlist = {
+                        if (authState.token.isNotBlank()) {
+                            scope.launch {
+                                wishlistState = repository.fetchWishlist(authState.token)
+                            }
+                        }
+                    },
+                    onRemoveItem = { comicId ->
+                        if (authState.token.isNotBlank()) {
+                            scope.launch {
+                                wishlistState = repository.removeFromWishlist(authState.token, comicId)
+                            }
+                        }
+                    },
+                    onMoveToCart = { item ->
+                        if (authState.token.isNotBlank()) {
+                            scope.launch {
+                                when (val result = repository.addToCart(authState.token, item.comic.id, "ORIGINAL")) {
+                                    is UiState.Success -> {
+                                        cartState = result
+                                        wishlistState = repository.removeFromWishlist(authState.token, item.comic.id)
+                                        snackbarHostState.showSnackbar("Moved to cart!")
+                                    }
+                                    is UiState.Error -> snackbarHostState.showSnackbar(result.message)
+                                    UiState.Loading -> Unit
+                                }
                             }
                         }
                     }

@@ -58,6 +58,15 @@ data class CartItemRequest(
     val purchaseType: String? = null
 )
 
+data class WishlistItemDto(
+    val id: Long,
+    val comic: ComicDto
+)
+
+data class WishlistItemRequest(
+    val comicId: Long
+)
+
 data class NewsPostDto(
     val id: Long,
     val title: String,

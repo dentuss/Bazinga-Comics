@@ -89,6 +89,27 @@ class BazingaRepository(private val api: BazingaApi) {
                 onFailure = { UiState.Error(it.message ?: "Unable to clear cart") }
             )
 
+    suspend fun fetchWishlist(token: String): UiState<List<WishlistItemDto>> =
+        runCatching { api.getWishlist("Bearer $token") }
+            .fold(
+                onSuccess = { UiState.Success(it) },
+                onFailure = { UiState.Error(it.message ?: "Unable to load wishlist") }
+            )
+
+    suspend fun addToWishlist(token: String, comicId: Long): UiState<List<WishlistItemDto>> =
+        runCatching { api.addToWishlist("Bearer $token", WishlistItemRequest(comicId)) }
+            .fold(
+                onSuccess = { UiState.Success(it) },
+                onFailure = { UiState.Error(it.message ?: "Unable to add to wishlist") }
+            )
+
+    suspend fun removeFromWishlist(token: String, comicId: Long): UiState<List<WishlistItemDto>> =
+        runCatching { api.removeFromWishlist("Bearer $token", comicId) }
+            .fold(
+                onSuccess = { UiState.Success(it) },
+                onFailure = { UiState.Error(it.message ?: "Unable to remove item") }
+            )
+
     suspend fun fetchNews(): UiState<List<NewsPostDto>> =
         runCatching { api.getNews() }
             .fold(
