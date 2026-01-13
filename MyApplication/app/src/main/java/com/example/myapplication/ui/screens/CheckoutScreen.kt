@@ -38,6 +38,7 @@ import com.example.myapplication.ui.theme.BazingaTextMuted
 import com.example.myapplication.ui.util.formatPrice
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.time.YearMonth
 
 @Composable
 fun CheckoutScreen(
@@ -61,7 +62,28 @@ fun CheckoutScreen(
     var cvv by rememberSaveable { mutableStateOf("") }
     var isProcessing by rememberSaveable { mutableStateOf(false) }
     var orderComplete by rememberSaveable { mutableStateOf(false) }
+    var showErrors by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val expiryPattern = Regex("^(0[1-9]|1[0-2])/\\d{2}$")
+    val isExpiryValid = expiryPattern.matchEntire(expiry.trim())?.let { match ->
+        val (monthText, yearText) = match.destructured
+        val expiryDate = YearMonth.of(2000 + yearText.toInt(), monthText.toInt())
+        !expiryDate.isBefore(YearMonth.now())
+    } ?: false
+    val isCardNumberValid = cardNumber.trim().matches(Regex("\\d{16}"))
+    val isCvvValid = cvv.trim().matches(Regex("\\d{3}"))
+    val areFieldsFilled = listOf(
+        firstName,
+        lastName,
+        email,
+        address,
+        city,
+        zip,
+        cardNumber,
+        expiry,
+        cvv
+    ).all { it.isNotBlank() }
+    val isFormValid = areFieldsFilled && isCardNumberValid && isExpiryValid && isCvvValid
 
     if (authState.token.isBlank()) {
         Surface(
@@ -142,41 +164,83 @@ fun CheckoutScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(text = "Shipping information", fontWeight = FontWeight.Bold)
+                        val firstNameError = showErrors && firstName.isBlank()
                         TextField(
                             value = firstName,
                             onValueChange = { firstName = it },
                             label = { Text("First name") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            isError = firstNameError,
+                            supportingText = if (firstNameError) {
+                                { Text("Required") }
+                            } else {
+                                null
+                            }
                         )
+                        val lastNameError = showErrors && lastName.isBlank()
                         TextField(
                             value = lastName,
                             onValueChange = { lastName = it },
                             label = { Text("Last name") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            isError = lastNameError,
+                            supportingText = if (lastNameError) {
+                                { Text("Required") }
+                            } else {
+                                null
+                            }
                         )
+                        val emailError = showErrors && email.isBlank()
                         TextField(
                             value = email,
                             onValueChange = { email = it },
                             label = { Text("Email") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            isError = emailError,
+                            supportingText = if (emailError) {
+                                { Text("Required") }
+                            } else {
+                                null
+                            }
                         )
+                        val addressError = showErrors && address.isBlank()
                         TextField(
                             value = address,
                             onValueChange = { address = it },
                             label = { Text("Address") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            isError = addressError,
+                            supportingText = if (addressError) {
+                                { Text("Required") }
+                            } else {
+                                null
+                            }
                         )
+                        val cityError = showErrors && city.isBlank()
                         TextField(
                             value = city,
                             onValueChange = { city = it },
                             label = { Text("City") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            isError = cityError,
+                            supportingText = if (cityError) {
+                                { Text("Required") }
+                            } else {
+                                null
+                            }
                         )
+                        val zipError = showErrors && zip.isBlank()
                         TextField(
                             value = zip,
                             onValueChange = { zip = it },
                             label = { Text("ZIP code") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            isError = zipError,
+                            supportingText = if (zipError) {
+                                { Text("Required") }
+                            } else {
+                                null
+                            }
                         )
                     }
                 }
@@ -192,27 +256,63 @@ fun CheckoutScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(text = "Payment details", fontWeight = FontWeight.Bold)
+                        val cardNumberError = showErrors && cardNumber.isBlank()
+                        val cardNumberFormatError = showErrors && cardNumber.isNotBlank() && !isCardNumberValid
                         TextField(
                             value = cardNumber,
                             onValueChange = { cardNumber = it },
                             label = { Text("Card number") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            isError = cardNumberError || cardNumberFormatError,
+                            supportingText = when {
+                                cardNumberError -> {
+                                    { Text("Required") }
+                                }
+                                cardNumberFormatError -> {
+                                    { Text("Card number must be 16 digits.") }
+                                }
+                                else -> null
+                            }
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
+                            val expiryError = showErrors && expiry.isBlank()
+                            val expiryFormatError = showErrors && expiry.isNotBlank() && !isExpiryValid
                             TextField(
                                 value = expiry,
                                 onValueChange = { expiry = it },
                                 label = { Text("Expiry") },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                isError = expiryError || expiryFormatError,
+                                supportingText = when {
+                                    expiryError -> {
+                                        { Text("Required") }
+                                    }
+                                    expiryFormatError -> {
+                                        { Text("Use MM/YY with a valid date.") }
+                                    }
+                                    else -> null
+                                }
                             )
+                            val cvvError = showErrors && cvv.isBlank()
+                            val cvvFormatError = showErrors && cvv.isNotBlank() && !isCvvValid
                             TextField(
                                 value = cvv,
                                 onValueChange = { cvv = it },
                                 label = { Text("CVV") },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                isError = cvvError || cvvFormatError,
+                                supportingText = when {
+                                    cvvError -> {
+                                        { Text("Required") }
+                                    }
+                                    cvvFormatError -> {
+                                        { Text("CVV must be 3 digits.") }
+                                    }
+                                    else -> null
+                                }
                             )
                         }
                     }
@@ -260,6 +360,8 @@ fun CheckoutScreen(
                 Button(
                     onClick = {
                         if (isProcessing) return@Button
+                        showErrors = true
+                        if (!isFormValid) return@Button
                         isProcessing = true
                         scope.launch {
                             delay(2000)

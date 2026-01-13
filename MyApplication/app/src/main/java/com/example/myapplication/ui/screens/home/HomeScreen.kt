@@ -847,10 +847,20 @@ private fun ComicDetailDialog(
                         )
                     }
                 }
+            }
+        },
+        confirmButton = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text("Back")
+                }
                 TextButton(
                     onClick = onToggleWishlist,
-                    enabled = authState.token.isNotBlank(),
-                    modifier = Modifier.padding(top = 12.dp)
+                    enabled = authState.token.isNotBlank()
                 ) {
                     Icon(
                         imageVector = if (isInWishlist) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
@@ -861,24 +871,17 @@ private fun ComicDetailDialog(
                         modifier = Modifier.padding(start = 6.dp)
                     )
                 }
-            }
-        },
-        confirmButton = {
-            if (authState.token.isBlank()) {
-                TextButton(onClick = onDismiss) {
-                    Text("Sign in to buy")
+                if (authState.token.isBlank()) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Sign in to buy")
+                    }
+                } else {
+                    TextButton(onClick = { onAddToCart(purchaseType) }) {
+                        Text(
+                            text = if (selectedPrice == 0.0) "Add to cart - Free" else "Add to cart - $${"%.2f".format(selectedPrice)}"
+                        )
+                    }
                 }
-            } else {
-                TextButton(onClick = { onAddToCart(purchaseType) }) {
-                    Text(
-                        text = if (selectedPrice == 0.0) "Add to cart - Free" else "Add to cart - $${"%.2f".format(selectedPrice)}"
-                    )
-                }
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Close")
             }
         }
     )
