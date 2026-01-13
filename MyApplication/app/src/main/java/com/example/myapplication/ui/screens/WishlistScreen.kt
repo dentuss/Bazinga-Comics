@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,6 +25,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,7 +57,31 @@ fun WishlistScreen(
     onRemoveItem: (Long) -> Unit,
     onMoveToCart: (WishlistItemDto) -> Unit
 ) {
+    var pendingRemoval by remember { mutableStateOf<WishlistItemDto?>(null) }
     val items = (wishlistState as? UiState.Success)?.data.orEmpty()
+
+    if (pendingRemoval != null) {
+        AlertDialog(
+            onDismissRequest = { pendingRemoval = null },
+            title = { Text(text = "Remove item?") },
+            text = { Text(text = "Are you sure you want to remove ${pendingRemoval?.comic?.title} from your wishlist?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        pendingRemoval?.let { onRemoveItem(it.comic.id) }
+                        pendingRemoval = null
+                    }
+                ) {
+                    Text("Remove")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingRemoval = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -100,7 +129,7 @@ fun WishlistScreen(
                                 items(items) { item ->
                                     WishlistItemRow(
                                         item = item,
-                                        onRemove = { onRemoveItem(item.comic.id) },
+                                        onRemove = { pendingRemoval = item },
                                         onMoveToCart = { onMoveToCart(item) }
                                     )
                                 }
